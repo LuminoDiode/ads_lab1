@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:ads_lab_1"
         mc:Ignorable="d"
         Title="MainWindow"
-		SizeToContent="WidthAndHeight">
+		SizeToContent="WidthAndHeight"
+		ResizeMode="CanMinimize">
 	<Grid>
 		<StackPanel Orientation="Vertical">
 			<StackPanel Orientation="Horizontal">
@@ -14,8 +15,10 @@
 				<RichTextBox VerticalScrollBarVisibility="Visible" Block.LineHeight="1" Name="OutputRTB" Background="LightCyan" Margin="5" Width="600" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True"/>
 			</StackPanel>
 			<StackPanel Orientation="Horizontal">
-				<Button Width="100" Height="50" Click="Button_Click_1">Load file</Button>
-				<Button Width="100" Height="50" Click="Button_Click">Search</Button>
+				<Button Width="50" Height="50" FontWeight="Bold" Click="LoadFileButton_Click">Файл</Button>
+				<Button Width="160" Height="50" Click="Lab1_Click">Lab1 (выбрать по условию)</Button>
+				<Button Width="160" Height="50" Click="Lab2_Click">Lab2 (найти MYCONST)</Button>
+				<Button Width="160" Height="50" Click="Lab4_Click">Lab4 (сократить текст)</Button>
 			</StackPanel>
 		</StackPanel>
 	</Grid>
