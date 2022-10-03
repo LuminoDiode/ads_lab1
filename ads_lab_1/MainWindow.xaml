@@ -1,0 +1,22 @@
+﻿<Window x:Class="ads_lab_1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ads_lab_1"
+        mc:Ignorable="d"
+        Title="MainWindow"
+		SizeToContent="WidthAndHeight">
+	<Grid>
+		<StackPanel Orientation="Vertical">
+			<StackPanel Orientation="Horizontal">
+				<RichTextBox VerticalScrollBarVisibility="Visible" Block.LineHeight="1" Name="InputRTB" Background="LightCyan" Margin="5" Width="600" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="False"/>
+				<RichTextBox VerticalScrollBarVisibility="Visible" Block.LineHeight="1" Name="OutputRTB" Background="LightCyan" Margin="5" Width="600" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True"/>
+			</StackPanel>
+			<StackPanel Orientation="Horizontal">
+				<Button Width="100" Height="50" Click="Button_Click_1">Load file</Button>
+				<Button Width="100" Height="50" Click="Button_Click">Search</Button>
+			</StackPanel>
+		</StackPanel>
+	</Grid>
+</Window>
