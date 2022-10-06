@@ -264,93 +264,106 @@ namespace ads_lab_1
 		// Порядок выбора случая важен !!!
 		public double Eval2(string s)
 		{
-			Debug.WriteLine($"Evaluation of string \'{s}\' started.");
-
-			if (new Regex(@"\s").IsMatch(s)) throw new ArgumentException("White-spaces is not allowed in the expression");
-			if (isNumberRegex.IsMatch(s)) return double.Parse(s);
-
-			var opToCalc = GetIndexOfFirstPriorTopOp(s, out var len);
-			if (opToCalc is not null)
+			try
 			{
-				GetExprsForOpAt(s, opToCalc.Value, len, out var left, out var right);
-				getIndexesOfExprs(s, opToCalc.Value, len, out var leftReplace, out var rightReplace);
-				var operation = OperatorFromString(s.Substring(opToCalc.Value, len));
+				Debug.WriteLine($"Evaluation of string \'{s}\' started.");
 
-				double evaluated;
-				switch (operation)
+				if (new Regex(@"\s").IsMatch(s)) throw new ArgumentException("White-spaces is not allowed in the expression");
+				if (isNumberRegex.IsMatch(s)) return double.Parse(s);
+
+				var opToCalc = GetIndexOfFirstPriorTopOp(s, out var len);
+				if (opToCalc is not null)
 				{
-					case MathOperators.devide:
-						evaluated = Eval2(left) / Eval2(right);
-						break;
-					case MathOperators.multiply:
-						evaluated = Eval2(left) * Eval2(right);
-						break;
-					case MathOperators.plus:
-						evaluated = Eval2(left) + Eval2(right);
-						break;
-					case MathOperators.minus:
-						evaluated = Eval2(left) - Eval2(right);
-						break;
-					case MathOperators.pow:
-						evaluated = Math.Pow(Eval2(left), Eval2(right));
-						break;
+					GetExprsForOpAt(s, opToCalc.Value, len, out var left, out var right);
+					getIndexesOfExprs(s, opToCalc.Value, len, out var leftReplace, out var rightReplace);
+					var operation = OperatorFromString(s.Substring(opToCalc.Value, len));
 
-					default:
-						throw new ArgumentException("Unknown operator found.");
-				}
+#if DEBUG
+					var t1 = Eval2(left);
+					var t2 = Eval2(right);
+#endif
 
-				var newS = s.Remove(leftReplace.Start, leftReplace.Count + rightReplace.Count + len).Insert(leftReplace.Start, evaluated.ToString());
-
-				if (evaluated is double.NaN) return double.NaN;
-				return Eval2(newS);
-			}
-
-			if (s.StartsWith("-("))
-			{
-				//return Eval2(s.Insert(1, "1*"));
-
-				s = s.Substring(2).Insert(0, "(-1*(");
-				int closure = FindIndexOfClosure(s,"(-1*(".Length-1);
-				return Eval2(s.Insert(closure,")"));
-			};
-			if (s.StartsWith('(') && s.EndsWith(')'))
-			{
-
-				return Eval2(s.Substring(1, s.Length - 2));
-			};
-
-			if (isFunctionCallRegex.IsMatch(s))
-			{
-				var indexOfBracket = s.IndexOf('(');
-				var funcName = s.Substring(0, indexOfBracket);
-				var numOfParams = CountParametersOfFuncCall(s, out var parameters);
-
-				bool negative = false;
-				if (funcName.StartsWith('-'))
-				{
-					funcName = funcName.Substring(1);
-					negative = true;
-				}
-				if (numOfParams == 1)
-				{
-					if (!FunctionsSignatures1.TryGetValue(funcName, out var func))
+					double evaluated;
+					switch (operation)
 					{
-						throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
+						case MathOperators.devide:
+							evaluated = Eval2(left) / Eval2(right);
+							break;
+						case MathOperators.multiply:
+							evaluated = Eval2(left) * Eval2(right);
+							break;
+						case MathOperators.plus:
+							evaluated = Eval2(left) + Eval2(right);
+							break;
+						case MathOperators.minus:
+							evaluated = Eval2(left) - Eval2(right);
+							break;
+						case MathOperators.pow:
+							if (t1 < 0) throw new ArgumentException("Cannot pow the negative number");
+							evaluated = Math.Pow(Eval2(left), Eval2(right));
+							break;
+
+						default:
+							throw new ArgumentException("Unknown operator found.");
 					}
-					return (negative ? -1 : 1) * func(Eval2(parameters[0]));
+
+					var newS = s.Remove(leftReplace.Start, leftReplace.Count + rightReplace.Count + len).Insert(leftReplace.Start, evaluated.ToString());
+
+					if (evaluated is double.NaN) return double.NaN;
+					return Eval2(newS);
 				}
-				else if (numOfParams == 2)
+
+				if (s.StartsWith("-("))
 				{
-					if (!FunctionsSignatures2.TryGetValue(funcName, out var func))
+					return Eval2(s.Insert(1, "1*"));
+
+					//s = s.Substring(2).Insert(0, "(-1*(");
+					//int closure = FindIndexOfClosure(s,"(-1*(".Length-1);
+					//return Eval2(s.Insert(closure,")"));
+				};
+				if (s.StartsWith('(') && s.EndsWith(')'))
+				{
+
+					return Eval2(s.Substring(1, s.Length - 2));
+				};
+
+				if (isFunctionCallRegex.IsMatch(s))
+				{
+					var indexOfBracket = s.IndexOf('(');
+					var funcName = s.Substring(0, indexOfBracket);
+					var numOfParams = CountParametersOfFuncCall(s, out var parameters);
+
+					bool negative = false;
+					if (funcName.StartsWith('-'))
 					{
-						throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
+						funcName = funcName.Substring(1);
+						negative = true;
 					}
-					return (negative ? -1 : 1) * func(Eval2(parameters[0]), Eval2(parameters[1]));
+					if (numOfParams == 1)
+					{
+						if (!FunctionsSignatures1.TryGetValue(funcName, out var func))
+						{
+							throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
+						}
+						return (negative ? -1 : 1) * func(Eval2(parameters[0]));
+					}
+					else if (numOfParams == 2)
+					{
+						if (!FunctionsSignatures2.TryGetValue(funcName, out var func))
+						{
+							throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
+						}
+						return (negative ? -1 : 1) * func(Eval2(parameters[0]), Eval2(parameters[1]));
+					}
+
 				}
 
+				throw new ArgumentException($"Could not determinate the type of expression \'{s}\'.");
 			}
-
-			throw new ArgumentException($"Could not determinate the type of expression \'{s}\'.");
+			catch (Exception e)
+			{
+				throw new ArgumentException("An error occured during the evaluation", e);
+			}
 		}
 	}
 }

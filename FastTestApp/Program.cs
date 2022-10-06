@@ -7,6 +7,6 @@ internal class Program
 	{
 		var worker = new StringEvaluator();
 		//Console.WriteLine(worker.Eval2(@"-19.06887600314356+2"));
-		Console.WriteLine(worker.Eval2(@"1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)+2))/3"));
+		Console.WriteLine(worker.Eval2(@"(-(-(ln(-cos(255)-(-sin(1)))-0.001)))^^ln(10)"));
 	}
 }

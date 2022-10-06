@@ -371,16 +371,13 @@ namespace Tests
 		{
 			string s; double value;
 
-			s = @"-(-(-(1+1)))^^2"; // (-2)^2
-			Assert.Equal(4, evalFunction(s));
+			s = @"(-(-(1+ln(-tan(22*cos(122)+2)+sin(22-sin(122)^^3+2))/3)))^^log2(4)";
+			value = 2.07356325964;
+			Assert.Equal(value, evalFunction(s),10);
 
-			s = @"-(-(-(1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)^^3+2))/3)))^^log2(4)";
-			value = Math.Pow(-(1 + Math.Log10(
-					-Math.Tan(22 * Math.Cos(122) + 2)
-					+
-					Math.Pow(22, Math.Pow(-Math.Sin(122), 3) + 2)
-					) / 3), Math.Log2(4));
-			Assert.Equal(value, evalFunction(s));
+			s = @"(-(-(-(1+ln(-tan(22*cos(122)+2)+sin(22-sin(122)^^3+2))/3))))^^log2(4)";
+			value = 2.07356325964;
+			Assert.Throws<ArgumentException>(()=>evalFunction(s));
 		}
 	}
 }
