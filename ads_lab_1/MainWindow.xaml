@@ -16,10 +16,17 @@
 			</StackPanel>
 			<StackPanel Orientation="Horizontal">
 				<Button Width="50" Height="50" FontWeight="Bold" Click="LoadFileButton_Click">Файл</Button>
-				<Button Width="160" Height="50" Click="Lab1_Click">Lab1 (выбрать по условию)</Button>
-				<Button Width="160" Height="50" Click="Lab2_Click">Lab2 (найти MYCONST)</Button>
-				<Button Width="160" Height="50" Click="Lab4_Click">Lab4 (сократить текст)</Button>
+				<Button Width="130" Height="50" Click="Lab1_Click">Lab1 (код по паттерну)</Button>
+				<Button Width="130" Height="50" Click="Lab2_Click">Lab2 (найти MYCONST)</Button>
+				<Button Width="130" Height="50" Click="Lab4_Click">Lab4 (сократить текст)</Button>
+				<Button Width="130" Height="50" Click="Lab5_Click">Lab5 (венгерская зап.)</Button>
+				<Button Width="130" Height="50" Click="Lab6_Click">Lab6 (поиск чисел)</Button>
+				<Button Width="130" Height="50" Click="Lab7_Click">Lab7 (вычисл. выраж.)</Button>
+
+				<Button Width="130" Height="50" Click="LoadTemplate1_Click">Шаблон для 1,2,5,6</Button>
+				<Button Width="130" Height="50" Click="LoadTemplate2_Click">Шаблон для 4</Button>
+				<Button Width="130" Height="50" Click="LoadTemplate3_Click">Шаблон для 7</Button>
 			</StackPanel>
 		</StackPanel>
 	</Grid>
-</Window>
+</Window>	

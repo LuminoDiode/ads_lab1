@@ -7,26 +7,40 @@ using System.Threading.Tasks;
 
 namespace ads_lab_1
 {
-	// Оператор цикла do while и знаки математических операций / и *.
+	
 	internal class ClaimMatcher
 	{
 		private List<Regex> claimMatcher=new();
 
-		public ClaimMatcher()
+		public ClaimMatcher(IEnumerable<Regex>orderedRegexClaims)
 		{
-			claimMatcher.Add(new Regex(@"(?<=(\s|\A))do[\s]*[{]\s*.+\s*[}][\s]*while[(].+[)]\s*[;]"));
-			claimMatcher.Add(new Regex(@"[^/][/][^/]"));
-			claimMatcher.Add(new Regex(@"[^/][/][^/]"));
+			claimMatcher.AddRange(orderedRegexClaims);
 		}
 
-		public IEnumerable<string> matches(string code)
+		public IEnumerable<string> getMatches(string code)
 		{
 			var matches = claimMatcher[0].Matches(code).Select(x => x.Value);
-			for(int i =1;i<claimMatcher.Count-1;i++)
+			for(int i =1;i<claimMatcher.Count;i++)
 			{
-				matches = matches.Where(x => claimMatcher[i].IsMatch(x));
+				matches = matches.Where(x => claimMatcher[i].IsMatch(x)).ToList(); // strange error without ToList
 			}
 			return matches;
 		}
+
+		//public struct MatchIndex
+		//{
+		//	public int Start;
+		//	public int Count;
+		//}
+		//public IEnumerable<MatchIndex>getMatchesIndexes(string code)
+		//{
+		//	var matches = claimMatcher[0].Matches(code).Select(x => (x.Index,x.Value));
+		//	for (int i = 1; i < claimMatcher.Count; i++)
+		//	{
+		//		matches = matches.Where(x => claimMatcher[i].IsMatch(x.Value)).ToList();
+		//	}
+		//	return matches.Select(x=> new MatchIndex { Start=x.Index,Count=x.Value.Length });
+		//}
+
 	}
 }
