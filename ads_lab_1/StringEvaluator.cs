@@ -203,7 +203,7 @@ namespace ads_lab_1
 			}
 
 			if (leftClosestOp.HasValue && leftClosestOpLen.HasValue)
-				Left = new ExpressionIndex() { Start = leftClosestOp.Value + leftClosestOpLen.Value, Count = opIndex - leftClosestOp.Value - leftClosestOpLen.Value };	
+				Left = new ExpressionIndex() { Start = leftClosestOp.Value + leftClosestOpLen.Value, Count = opIndex - leftClosestOp.Value - leftClosestOpLen.Value };
 			else
 				Left = new ExpressionIndex() { Start = 0, Count = opIndex };
 
@@ -242,6 +242,19 @@ namespace ads_lab_1
 			parameters.Add(s.Substring(prevCommaIndex + 1, (s.Length - prevCommaIndex - 2)));
 			count++;
 			return count;
+		}
+
+		public int FindIndexOfClosure(string s, int openIndex)
+		{
+			int opened = 1;
+			for (int i = openIndex + 1; i < s.Length; i++)
+			{
+				if (s[i] == '(') opened++;
+				if (s[i] == ')') opened--;
+				if (opened == 0) return i;
+			}
+
+			return -1;
 		}
 
 		// 1. константа? - вернуть константу
@@ -294,9 +307,14 @@ namespace ads_lab_1
 
 			if (s.StartsWith("-("))
 			{
-				return Eval2(s.Insert(1, "1*"));
+				//return Eval2(s.Insert(1, "1*"));
+
+				s = s.Substring(2).Insert(0, "(-1*(");
+				int closure = FindIndexOfClosure(s,"(-1*(".Length-1);
+				return Eval2(s.Insert(closure,")"));
 			};
-			if (s.StartsWith('(') && s.EndsWith(')')) {
+			if (s.StartsWith('(') && s.EndsWith(')'))
+			{
 
 				return Eval2(s.Substring(1, s.Length - 2));
 			};

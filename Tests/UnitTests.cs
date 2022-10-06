@@ -6,15 +6,17 @@ using static ads_lab_1.StringEvaluator;
 
 namespace Tests
 {
-	public class UnitTest1
+	public class UnitTests
 	{
 		private readonly ITestOutputHelper output;
 		private readonly StringEvaluator worker;
+		private readonly Func<string, double> evalFunction;
 
-		public UnitTest1(ITestOutputHelper output)
+		public UnitTests(ITestOutputHelper output)
 		{
 			this.output = output;
 			worker = new StringEvaluator();
+			evalFunction = worker.Eval2;
 		}
 
 		[Fact]
@@ -22,7 +24,7 @@ namespace Tests
 		{
 			Assert.True(
 				worker.OpsPriority.SequenceEqual(
-					new MathOperators[] { MathOperators.pow,MathOperators.devide, MathOperators.multiply, MathOperators.minus, MathOperators.plus })
+					new MathOperators[] { MathOperators.pow, MathOperators.devide, MathOperators.multiply, MathOperators.minus, MathOperators.plus })
 				);
 		}
 
@@ -47,7 +49,7 @@ namespace Tests
 
 			expr = "(sin(255+2224.1)*12)^^(1.1+2.222*(11))";
 			detected = worker.GetIndexesOfTopLevelOperators(expr).Select(x => x.Index);
-			expected = new int[] { expr.IndexOf("^^")};
+			expected = new int[] { expr.IndexOf("^^") };
 			output.WriteLine($"detected: {string.Join(',', detected)}; expected: {string.Join(',', expected)}.");
 			Assert.True(detected.SequenceEqual(expected));
 		}
@@ -111,13 +113,13 @@ namespace Tests
 
 			s = "pow(22,cos(122))+(cos(122)/3)";
 			worker.GetExprsForOpAt(s, s.IndexOf("+"), 1, out left, out right);
-			Assert.Equal("pow(22,cos(122))",left);
-			Assert.Equal("(cos(122)/3)",right);
+			Assert.Equal("pow(22,cos(122))", left);
+			Assert.Equal("(cos(122)/3)", right);
 
 			s = "(pow(22,cos(122)+2))+(pow(22,cos(122)+2))/3";
 			worker.GetExprsForOpAt(s, s.IndexOf("/"), 1, out left, out right);
-			Assert.Equal("(pow(22,cos(122)+2))",left);
-			Assert.Equal("3",right);
+			Assert.Equal("(pow(22,cos(122)+2))", left);
+			Assert.Equal("3", right);
 
 		}
 
@@ -193,13 +195,13 @@ namespace Tests
 			double value;
 
 			value = 255;
-			Assert.Equal(value,worker.Eval2(value.ToString()));
+			Assert.Equal(value, evalFunction(value.ToString()));
 
 			value = 1.255;
-			Assert.Equal(value,worker.Eval2(value.ToString()));
+			Assert.Equal(value, evalFunction(value.ToString()));
 
 			value = 0.255;
-			Assert.Equal(value,worker.Eval2(value.ToString()));
+			Assert.Equal(value, evalFunction(value.ToString()));
 		}
 
 		[Fact]
@@ -209,55 +211,55 @@ namespace Tests
 
 			value = 255 + 1;
 			s = "255+1";
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "255.0+1.1";
 			value = 255.0 + 1.1;
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "(255.0+1.1)";
 			value = (255.0 + 1.1);
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "255.0+(1.1+2)";
 			value = 255.0 + (1.1 + 2);
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "255.0+(1.1+2)";
 			value = 255.0 + (1.1 + 2);
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "255.0/(1.1+2)";
 			value = 255.0 / (1.1 + 2);
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "255.0/(1.1*(2-1))";
 			value = 255.0 / (1.1 * (2 - 1));
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "255.0/(1.1*(2-1))";
 			value = 255.0 / (1.1 * (2 - 1));
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "255.0^^(1.1*(2-1))";
 			value = Math.Pow(255.0, (1.1 * (2 - 1)));
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "-19.06887600314356+2";
 			value = -19.06887600314356 + 2;
-			Assert.Equal(value, worker.Eval2(s),10);
+			Assert.Equal(value, evalFunction(s), 10);
 
 			s = "255.0+(1.1+2))";
 			value = 255.0 + (1.1 + 2);
-			Assert.ThrowsAny<Exception>(() => Assert.Equal(value,worker.Eval2(s)));
+			Assert.ThrowsAny<Exception>(() => Assert.Equal(value, evalFunction(s)));
 
 			s = "255.0//(1.1+2))";
 			value = 255.0 + (1.1 + 2);
-			Assert.ThrowsAny<Exception>(() => Assert.Equal(value,worker.Eval2(s)));
+			Assert.ThrowsAny<Exception>(() => Assert.Equal(value, evalFunction(s)));
 
 			s = "((255.0+(1.1+2))";
 			value = 255.0 + (1.1 + 2);
-			Assert.ThrowsAny<Exception>(() => Assert.Equal(value,worker.Eval2(s)));
+			Assert.ThrowsAny<Exception>(() => Assert.Equal(value, evalFunction(s)));
 		}
 
 		[Fact]
@@ -267,19 +269,19 @@ namespace Tests
 
 			s = "sin(1)";
 			value = Math.Sin(1d);
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "sin(1.3+2)";
 			value = Math.Sin(1.3 + 2);
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "pow(sin(1.3+2),cos(122))";
 			value = Math.Pow(Math.Sin(1.3 + 2), Math.Cos(122));
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "pow(sin(1.3+2),cos(122)+2)";
 			value = Math.Pow(Math.Sin(1.3 + 2), Math.Pow(Math.Cos(122), 2));
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "pow(sin(1.3+2),cos(122)+2)+pow(sin(1.3+2),cos(122)+2)/pow(sin(1.3+2),cos(122)+2)*pow(sin(1.3+2),cos(122)+2)-pow(sin(1.3+2),cos(122)+2)";
 			value = Math.Pow(Math.Sin(1.3 + 2), Math.Cos(122) + 2)
@@ -287,19 +289,19 @@ namespace Tests
 				/ Math.Pow(Math.Sin(1.3 + 2), Math.Cos(122) + 2)
 				* Math.Pow(Math.Sin(1.3 + 2), Math.Cos(122) + 2)
 				- Math.Pow(Math.Sin(1.3 + 2), Math.Cos(122) + 2);
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "pow(sin(1.3+2),(cos(122)+2)";
 			value = Math.Pow(Math.Sin(1.3 + 2), Math.Pow(Math.Cos(122), 2));
-			Assert.ThrowsAny<Exception>(() =>worker.Eval2(s));
+			Assert.ThrowsAny<Exception>(() => evalFunction(s));
 
 			s = "pow(sin(1.3+2),(cos(122)+2)+)pow(sin(1.3+2),(cos(122)+2)";
 			value = Math.Pow(Math.Sin(1.3 + 2), Math.Pow(Math.Cos(122), 2));
-			Assert.ThrowsAny<Exception>(() =>worker.Eval2(s));
+			Assert.ThrowsAny<Exception>(() => evalFunction(s));
 
 			s = "pow(sin(1.3+2),(cos(122())+2)+)pow(sin(1.3+2),(cos(122)+2)";
 			value = Math.Pow(Math.Sin(1.3 + 2), Math.Pow(Math.Cos(122), 2));
-			Assert.ThrowsAny<Exception>(() =>worker.Eval2(s));
+			Assert.ThrowsAny<Exception>(() => evalFunction(s));
 		}
 
 		[Fact]
@@ -309,25 +311,25 @@ namespace Tests
 
 			s = "(pow(22,cos(122)+2))";
 			value = Math.Pow(22, Math.Cos(122) + 2);
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = "(pow(22,cos(122)+2))/3";
-			value = Math.Pow(22, Math.Cos(122) + 2)/3;
-			Assert.Equal(value,worker.Eval2(s));
+			value = Math.Pow(22, Math.Cos(122) + 2) / 3;
+			Assert.Equal(value, evalFunction(s));
 
 			s = @"(pow(22,cos(122)+2))+(pow(22,cos(122)+2))/3";
 			value = (
 				Math.Pow(22, Math.Cos(122) + 2)
 				+
 				(Math.Pow(22, Math.Cos(122) + 2) / 3));
-			Assert.Equal(value,worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = @"((pow(22,cos(122)+2))+(pow(22,cos(122)+2)))/3";
 			value = (
 				Math.Pow(22, Math.Cos(122) + 2)
 				+
 				(Math.Pow(22, Math.Cos(122) + 2))) / 3;
-			Assert.Equal(value, worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 		}
 
 		[Fact]
@@ -339,14 +341,13 @@ namespace Tests
 					"tan(22*cos(122)+2)" +
 					"+" +
 					"pow(22,sin(122)+2)" +
-				")/3".Replace(" ",String.Empty);
-			output.WriteLine($"evaluating {s}");
+				")/3".Replace(" ", String.Empty);
 			value = 1 + Math.Log10(
 					Math.Tan(22 * Math.Cos(122) + 2)
 					+
 					Math.Pow(22, Math.Sin(122) + 2)
 					) / 3;
-			Assert.Equal(value, worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = @"1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)+2))/3";
 			value = 1 + Math.Log10(
@@ -354,7 +355,7 @@ namespace Tests
 					+
 					Math.Pow(22, -Math.Sin(122) + 2)
 					) / 3;
-			Assert.Equal(value, worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
 
 			s = @"-(-(1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)+2))/3))";
 			value = 1 + Math.Log10(
@@ -362,7 +363,24 @@ namespace Tests
 					+
 					Math.Pow(22, -Math.Sin(122) + 2)
 					) / 3;
-			Assert.Equal(value, worker.Eval2(s));
+			Assert.Equal(value, evalFunction(s));
+		}
+
+		[Fact]
+		public void Eval2_6()
+		{
+			string s; double value;
+
+			s = @"-(-(-(1+1)))^^2"; // (-2)^2
+			Assert.Equal(4, evalFunction(s));
+
+			s = @"-(-(-(1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)^^3+2))/3)))^^log2(4)";
+			value = Math.Pow(-(1 + Math.Log10(
+					-Math.Tan(22 * Math.Cos(122) + 2)
+					+
+					Math.Pow(22, Math.Pow(-Math.Sin(122), 3) + 2)
+					) / 3), Math.Log2(4));
+			Assert.Equal(value, evalFunction(s));
 		}
 	}
 }
