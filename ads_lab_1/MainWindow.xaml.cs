@@ -36,7 +36,7 @@ namespace ads_lab_1
 		}
 		private void LoadTemplate3_Click(object sender, RoutedEventArgs e)
 		{
-			this.setCurrentOuput(@"pow(22,cos(122)+2)+pow(22,cos(122)+2)/pow(22,cos(122)+2)*pow(22,cos(122)+2)"
+			this.setCurrentOuput(@"1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)+2))/3"
 			, InputRTB);
 		}
 
@@ -278,9 +278,11 @@ namespace ads_lab_1
 		private void Lab7_Click(object sender, RoutedEventArgs e)
 		{
 			var text = getCurrentInput().Replace("\r\n",String.Empty);
+			var worker = new StringEvaluator();
+
 			try
 			{
-				setCurrentOuput(StringEvaluator.Eval2(text).ToString());
+				setCurrentOuput(worker.Eval2(text).ToString());
 			}
 			catch(Exception ex)
 			{
