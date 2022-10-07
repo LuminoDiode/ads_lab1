@@ -128,7 +128,7 @@ namespace Tests
 		public void NumberOfFuncParameters1()
 		{
 			string s = "sin(255.1)";
-			var result = worker.CountParametersOfFuncCall(s, out var pararms);
+			var result = worker.GetParametersOfFuncCall(s, out var pararms);
 			Assert.Equal(1, result);
 			Assert.Equal(s.Substring(s.IndexOf('(') + 1, s.Length - s.IndexOf('(') - 2), pararms.First());
 		}
@@ -136,7 +136,7 @@ namespace Tests
 		public void NumberOfFuncParameters2()
 		{
 			string s = "pow(255.1,999)";
-			var result = worker.CountParametersOfFuncCall(s, out var pararms);
+			var result = worker.GetParametersOfFuncCall(s, out var pararms);
 			Assert.Equal(2, result);
 			output.WriteLine($"First param " +
 				$"expected: {s.Substring(s.IndexOf('(') + 1, s.Length - s.IndexOf('(') - 2).Split(',').First()}; " +
@@ -373,12 +373,8 @@ namespace Tests
 			string s; double value;
 
 			s = @"(-(-(1+ln(-tan(22*cos(122)+2)+sin(22-sin(122)^^3+2))/3)))^^log2(4)";
-			value = 2.07356325964;
+			value = Math.Pow((-(-(1 + Math.Log(-Math.Tan(22 * Math.Cos(122) + 2) + Math.Sin(22 - Math.Pow(Math.Sin(122), 3) + 2)) / 3))), Math.Log2(4));
 			Assert.Equal(value, evalFunction(s),10);
-
-			//s = @"(-(-(-(1+ln(-tan(22*cos(122)+2)+sin(22-sin(122)^^3+2))/3))))^^log2(4)";
-			//value = 2.07356325964;
-			//Assert.Throws<ArgumentException>(()=>evalFunction(s));
 		}
 
 		[Fact]
