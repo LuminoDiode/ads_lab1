@@ -17,17 +17,17 @@ namespace ads_lab_1
 
 	public class StringEvaluator
 	{
-		public enum MathOperators
-		{
-			devide,
-			multiply,
-			minus,
-			plus,
-			pow
-		}
+		//public enum MathOperators
+		//{
+		//	devide,
+		//	multiply,
+		//	minus,
+		//	plus,
+		//	pow
+		//}
 		public struct PrioritizedOperation
 		{
-			public MathOperators Operation;
+			public string Operation;
 			public int Priority;
 		}
 		public struct PrioritizedOperationOnIndex
@@ -35,78 +35,131 @@ namespace ads_lab_1
 			public PrioritizedOperation Operation;
 			public int Index;
 		}
+		public struct PrioritizedOperator
+		{
+			public string Operator;
+			public int Priority;
 
-		public List<string> Ops;
-		public List<string> Funcs;
-		public List<MathOperators> OpsPriority = (new MathOperators[] {
-			MathOperators.pow,MathOperators.devide, MathOperators.multiply, MathOperators.minus, MathOperators.plus
-		}).ToList();
+			public PrioritizedOperator(string Operator, int Priority)
+			{
+				this.Operator = Operator;
+				this.Priority = Priority;
+			}
+		}
+
+
+		//public List<MathOperators> OpsPriority = (new MathOperators[] {
+		//	MathOperators.pow,MathOperators.devide, MathOperators.multiply, MathOperators.minus, MathOperators.plus
+		//}).ToList();
+
 		public Dictionary<string, Func<double, double>> FunctionsSignatures1 = new(); // 1 param
 		public Dictionary<string, Func<double, double, double>> FunctionsSignatures2 = new(); // 2 params
+		public Dictionary<string, Func<double, double, double, double>> FunctionsSignatures3 = new(); // 3 params
+		public Dictionary<string, Func<double, double, double>> OperatorsSignatures = new();
+		public List<PrioritizedOperator> OperatorsPriorities = new();
 
-		public Regex isNumberRegex;
-		public Regex isFunctionCallRegex;
 
-		public StringEvaluator()
+		public Regex isNumberRegex => new Regex(@"^[-]?\d+(\.\d+)?$");
+		public Regex isFunctionCallRegex => new Regex(@"^((\A|\))[-])?({ALLOWEDFUNCS})[\(](\n|.)+[\)]$".Replace("{ALLOWEDFUNCS}",
+				string.Join('|', FunctionsSignatures1.Keys.Concat(FunctionsSignatures2.Keys).Concat(FunctionsSignatures3.Keys).ToList())));
+
+		public StringEvaluator(bool useDefaultFunctions = true, bool useDefaultOperators = true)
 		{
 			Debug.WriteLine($"Constructor of {nameof(StringEvaluator)} is being called.");
 
-			Ops = "^^,/,*,-,+".Split(',').ToList();
-
-			FunctionsSignatures1.Add("sin", Math.Sin);
-			FunctionsSignatures1.Add("cos", Math.Cos);
-			FunctionsSignatures2.Add("pow", Math.Pow);
-			FunctionsSignatures1.Add("tan", Math.Tan);
-			FunctionsSignatures1.Add("log10", Math.Log10);
-			FunctionsSignatures1.Add("log2", Math.Log2);
-			FunctionsSignatures1.Add("ln", Math.Log);
-
-			Funcs = FunctionsSignatures1.Keys.Concat(FunctionsSignatures2.Keys).ToList();
-			Ops = "^^,/,*,-,+".Split(',').ToList();
-
-			isNumberRegex = new Regex(@"^[-]?\d+(\.\d+)?$");
-			isFunctionCallRegex = new Regex(@"^((\A|\))[-])?({ALLOWEDFUNCS})[\(](\n|.)+[\)]$".Replace("{ALLOWEDFUNCS}", string.Join('|', Funcs)));
-		}
-		public MathOperators OperatorFromString(string s)
-		{
-			switch (s)
+			if (useDefaultFunctions)
 			{
-				case "+":
-					return MathOperators.plus;
-				case "-":
-					return MathOperators.minus;
-				case "*":
-					return MathOperators.multiply;
-				case "/":
-					return MathOperators.devide;
-				case "^^":
-					return MathOperators.pow;
-				case "**":
-					return MathOperators.pow;
+				FunctionsSignatures1.Add("sin", Math.Sin);
+				FunctionsSignatures1.Add("cos", Math.Cos);
+				FunctionsSignatures2.Add("pow", Math.Pow);
+				FunctionsSignatures1.Add("tan", Math.Tan);
+				FunctionsSignatures1.Add("log10", Math.Log10);
+				FunctionsSignatures1.Add("log2", Math.Log2);
+				FunctionsSignatures1.Add("ln", Math.Log);
+			}
+			if (useDefaultOperators)
+			{
+				OperatorsSignatures.Add("^^", (x, y) => Math.Pow(x, y));
+				OperatorsSignatures.Add("/", (x, y) => x / y);
+				OperatorsSignatures.Add("*", (x, y) => x * y);
+				OperatorsSignatures.Add("-", (x, y) => x - y);
+				OperatorsSignatures.Add("+", (x, y) => x + y);
 
-				default:
-					throw new ArgumentException($"Unknown operator {s}.");
+				OperatorsPriorities.Add(new("^^", 10));
+				OperatorsPriorities.Add(new("/", 5));
+				OperatorsPriorities.Add(new("*", 5));
+				OperatorsPriorities.Add(new("-", 1));
+				OperatorsPriorities.Add(new("+", 1));
+
+
 			}
 		}
-		public string OperatorToString(MathOperators op)
-		{
-			switch (op)
-			{
-				case MathOperators.plus:
-					return "+";
-				case MathOperators.minus:
-					return "-";
-				case MathOperators.multiply:
-					return "*";
-				case MathOperators.devide:
-					return "/";
-				case MathOperators.pow:
-					return "^^";
+	
 
-				default:
-					throw new ArgumentException($"Unknown operator {op}.");
-			}
+		public void AddFunction(string funcName, Func<double,double> calcFunction)
+		{
+			this.FunctionsSignatures1.Add(funcName, calcFunction);
 		}
+		public void AddFunction(string funcName, Func<double, double,double> calcFunction)
+		{
+			this.FunctionsSignatures2.Add(funcName, calcFunction);
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double> calcFunction)
+		{
+			this.FunctionsSignatures3.Add(funcName, calcFunction);
+		}
+
+		/// <summary>
+		/// The default operators priority is: <br/>
+		/// '^^' = 10, <br/>
+		/// '/' = '*' = 5, <br/>
+		/// '-' = '+' = 1.
+		/// </summary>
+		public void AddOperator(string operatorString, Func<double, double, double> calcFunction,int operatorPriority)
+		{
+			this.OperatorsSignatures.Add(operatorString, calcFunction);
+			this.OperatorsPriorities.Add(new(operatorString, operatorPriority));
+		}
+		//public MathOperators OperatorFromString(string s)
+		//{
+		//	switch (s)
+		//	{
+		//		case "+":
+		//			return MathOperators.plus;
+		//		case "-":
+		//			return MathOperators.minus;
+		//		case "*":
+		//			return MathOperators.multiply;
+		//		case "/":
+		//			return MathOperators.devide;
+		//		case "^^":
+		//			return MathOperators.pow;
+		//		case "**":
+		//			return MathOperators.pow;
+
+		//		default:
+		//			throw new ArgumentException($"Unknown operator {s}.");
+		//	}
+		//}
+		//public string OperatorToString(MathOperators op)
+		//{
+		//	switch (op)
+		//	{
+		//		case MathOperators.plus:
+		//			return "+";
+		//		case MathOperators.minus:
+		//			return "-";
+		//		case MathOperators.multiply:
+		//			return "*";
+		//		case MathOperators.devide:
+		//			return "/";
+		//		case MathOperators.pow:
+		//			return "^^";
+
+		//		default:
+		//			throw new ArgumentException($"Unknown operator {op}.");
+		//	}
+		//}
 
 		public bool isOnThisIndex(string orig, string search, int startIndex)
 		{
@@ -117,9 +170,9 @@ namespace ads_lab_1
 
 			return true;
 		}
-		public IEnumerable<PrioritizedOperationOnIndex> GetIndexesOfTopLevelOperators(string s, List<string> OrderedByPriority = null!, bool SortByPriority = true)
+		public IEnumerable<PrioritizedOperationOnIndex> GetIndexesOfTopLevelOperators(string s, List<PrioritizedOperator> OrderedByPriority = null!, bool SortByPriority = true)
 		{
-			if (OrderedByPriority is null) OrderedByPriority = Ops;
+			if (OrderedByPriority is null) OrderedByPriority = OperatorsPriorities;
 			List<PrioritizedOperationOnIndex> IndexesOfOperators = new();
 			int BracketsOpened = 0;
 			for (int i = 0; i < s.Length; i++)
@@ -134,7 +187,7 @@ namespace ads_lab_1
 				}
 				else if (BracketsOpened == 0)
 				{
-					var found = OrderedByPriority.Find(op => isOnThisIndex(s, op, i));
+					var found = OrderedByPriority.OrderByDescending(x=> x.Operator.Length).ToList().Find(op => isOnThisIndex(s, op.Operator, i)).Operator;
 					if (found is not null)
 					{
 						if (found == "-" && (i == 0 || s[i - 1] == '(')) continue;
@@ -143,14 +196,19 @@ namespace ads_lab_1
 
 							Operation = new()
 							{
-								Operation = OperatorFromString(found),
-								Priority = int.MaxValue - OrderedByPriority.FindIndex(x => x.Equals(found))
+								Operation = found,
+								Priority = OrderedByPriority.Find(x => x.Operator.Equals(found)).Priority
 							},
 							Index = i
 						});
+						i += found.Length - 1;
 					}
 				}
 			}
+
+#if DEBUG
+			var t = IndexesOfOperators.OrderByDescending(x => x.Operation.Priority).ToList();
+#endif
 
 			if (SortByPriority)
 				return IndexesOfOperators.OrderByDescending(x => x.Operation.Priority);
@@ -160,10 +218,10 @@ namespace ads_lab_1
 
 		public int? GetIndexOfFirstPriorTopOp(string s, out int opLen)
 		{
-			var t = GetIndexesOfTopLevelOperators(s);
+			var t = GetIndexesOfTopLevelOperators(s,SortByPriority:true).ToList();
 			if (t.Any())
 			{
-				opLen = OperatorToString(t.First().Operation.Operation).Length;
+				opLen = t.First().Operation.Operation.Length;
 				return t.First().Index;
 			}
 			else
@@ -193,13 +251,13 @@ namespace ads_lab_1
 			{
 				var t = topLevelOps.Where(x => x.Index < opIndex).MaxBy(x => x.Index);
 				leftClosestOp = t.Index;
-				leftClosestOpLen = OperatorToString(t.Operation.Operation).Length;
+				leftClosestOpLen = t.Operation.Operation.Length;
 			}
 			if (topLevelOps.Any(x => x.Index > opIndex))
 			{
 				var t = topLevelOps.Where(x => x.Index > opIndex).MinBy(x => x.Index);
 				rightClosestOp = t.Index;
-				rightClosestOpLen = OperatorToString(t.Operation.Operation).Length;
+				rightClosestOpLen = t.Operation.Operation.Length;
 			}
 
 			if (leftClosestOp.HasValue && leftClosestOpLen.HasValue)
@@ -276,41 +334,23 @@ namespace ads_lab_1
 				{
 					GetExprsForOpAt(s, opToCalc.Value, len, out var left, out var right);
 					getIndexesOfExprs(s, opToCalc.Value, len, out var leftReplace, out var rightReplace);
-					var operation = OperatorFromString(s.Substring(opToCalc.Value, len));
+					var operation = s.Substring(opToCalc.Value, len);
 
-#if DEBUG
 					var t1 = Eval2(left);
 					var t2 = Eval2(right);
-#endif
 
 					double evaluated;
-					switch (operation)
+					if (OperatorsSignatures.TryGetValue(operation, out var MyFunc))
 					{
-						case MathOperators.devide:
-							evaluated = Eval2(left) / Eval2(right);
-							break;
-						case MathOperators.multiply:
-							evaluated = Eval2(left) * Eval2(right);
-							break;
-						case MathOperators.plus:
-							evaluated = Eval2(left) + Eval2(right);
-							break;
-						case MathOperators.minus:
-							evaluated = Eval2(left) - Eval2(right);
-							break;
-						case MathOperators.pow:
-							if (t1 < 0) throw new ArgumentException("Cannot pow the negative number");
-							evaluated = Math.Pow(Eval2(left), Eval2(right));
-							break;
-
-						default:
-							throw new ArgumentException("Unknown operator found.");
+						evaluated = MyFunc(t1, t2);
+					}
+					else
+					{
+						throw new ArgumentException("Unknown operator found.");
 					}
 
-					var newS = s.Remove(leftReplace.Start, leftReplace.Count + rightReplace.Count + len).Insert(leftReplace.Start, evaluated.ToString());
-
-					if (evaluated is double.NaN) return double.NaN;
-					return Eval2(newS);
+					return evaluated is double.NaN ? evaluated :
+						Eval2(s.Remove(leftReplace.Start, leftReplace.Count + rightReplace.Count + len).Insert(leftReplace.Start, evaluated.ToString()));
 				}
 
 				if (s.StartsWith("-("))

@@ -1,6 +1,7 @@
 using ads_lab_1;
 using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Newtonsoft.Json.Linq;
+using System.Windows.Controls;
 using Xunit.Abstractions;
 using static ads_lab_1.StringEvaluator;
 
@@ -22,10 +23,10 @@ namespace Tests
 		[Fact]
 		public void OperatorPriorities()
 		{
-			Assert.True(
-				worker.OpsPriority.SequenceEqual(
-					new MathOperators[] { MathOperators.pow, MathOperators.devide, MathOperators.multiply, MathOperators.minus, MathOperators.plus })
-				);
+			var actual = worker.OperatorsSignatures.Keys.ToList().Where(x => "^^,/,*,-,+".Split(',').Contains(x));
+			var expected = "^^,/,*,-,+".Split(',');
+			output.WriteLine(string.Join(',', actual));
+			Assert.True(expected.SequenceEqual(actual));
 		}
 
 		[Fact]
@@ -33,7 +34,7 @@ namespace Tests
 		{
 			var expr = "1+1-1";
 			var detected = worker.GetIndexesOfTopLevelOperators(expr).Select(x => x.Index);
-			var expected = new int[] { expr.IndexOf('-'), expr.IndexOf('+') };
+			var expected = new int[] { expr.IndexOf('+'), expr.IndexOf('-') };
 			output.WriteLine($"detected: {string.Join(',', detected)}; expected: {string.Join(',', expected)}.");
 			Assert.True(detected.SequenceEqual(expected));
 		}
@@ -42,7 +43,7 @@ namespace Tests
 		{
 			var expr = "pow(255,2)+11*32/333-cos(500)";
 			var detected = worker.GetIndexesOfTopLevelOperators(expr).Select(x => x.Index);
-			var expected = new int[] { expr.IndexOf('/'), expr.IndexOf('*'), expr.IndexOf('-'), expr.IndexOf('+') };
+			var expected = new int[] { expr.IndexOf('*'), expr.IndexOf('/'), expr.IndexOf('+'), expr.IndexOf('-') };
 			output.WriteLine($"detected: {string.Join(',', detected)}; expected: {string.Join(',', expected)}.");
 			Assert.True(detected.SequenceEqual(expected));
 
@@ -58,14 +59,14 @@ namespace Tests
 		public void IndexOfMostPriorOperation1()
 		{
 			var expr = "pow(255,2)+11*32-333-cos(500)/200";
-			Assert.Equal(expr.IndexOf('/'), worker.GetIndexOfFirstPriorTopOp(expr, out var dummy));
+			Assert.Equal(expr.IndexOf('*'), worker.GetIndexOfFirstPriorTopOp(expr, out var dummy));
 			Assert.Equal(1, dummy);
 		}
 		[Fact]
 		public void IndexOfMostPriorOperation2()
 		{
 			var expr = "pow(255,6/3*1)+11+32+333+cos(500.255)-200";
-			Assert.Equal(expr.IndexOf('-'), worker.GetIndexOfFirstPriorTopOp(expr, out var dummy));
+			Assert.Equal(expr.IndexOf('+'), worker.GetIndexOfFirstPriorTopOp(expr, out var dummy));
 			Assert.Equal(1, dummy);
 
 			expr = @"pow(22,cos(122))+(cos(122)/3)";
@@ -375,9 +376,25 @@ namespace Tests
 			value = 2.07356325964;
 			Assert.Equal(value, evalFunction(s),10);
 
-			s = @"(-(-(-(1+ln(-tan(22*cos(122)+2)+sin(22-sin(122)^^3+2))/3))))^^log2(4)";
-			value = 2.07356325964;
-			Assert.Throws<ArgumentException>(()=>evalFunction(s));
+			//s = @"(-(-(-(1+ln(-tan(22*cos(122)+2)+sin(22-sin(122)^^3+2))/3))))^^log2(4)";
+			//value = 2.07356325964;
+			//Assert.Throws<ArgumentException>(()=>evalFunction(s));
+		}
+
+		[Fact]
+		public void Eval2_7()
+		{
+			string s; double value;
+
+			var myWorker = new StringEvaluator();
+			myWorker.AddFunction("plsdont", (x, y) => 2 * x + 3 * y);
+			myWorker.AddOperator("&&", (left, right) => left / 2 + right / 2, 2);
+			myWorker.AddOperator("&", (left, right) => left / 4 + right / 4, 2);
+			myWorker.AddOperator("//", (left, right) => Math.Round(left/right), 2);
+
+			s = "25//(4&plsdont(1,2)+4&&plsdont(1,2)+4&plsdont(1,2))"; // 25/12
+			value = 2;
+			Assert.Equal(value, myWorker.Eval2(s), 10);
 		}
 	}
 }
