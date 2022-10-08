@@ -11,8 +11,8 @@
 	<Grid>
 		<StackPanel Orientation="Vertical">
 			<StackPanel Orientation="Horizontal">
-				<RichTextBox VerticalScrollBarVisibility="Visible" Block.LineHeight="1" Name="InputRTB" Background="LightCyan" Margin="5" Width="600" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="False"/>
-				<RichTextBox VerticalScrollBarVisibility="Visible" Block.LineHeight="1" Name="OutputRTB" Background="LightCyan" Margin="5" Width="600" Height="500" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True"/>
+				<RichTextBox FontSize="18" FontFamily="Consolas" VerticalScrollBarVisibility="Visible" Block.LineHeight="1" Name="InputRTB" Background="LightCyan" Margin="5" Width="600" Height="550" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="False"/>
+				<RichTextBox FontSize="18" FontFamily="Consolas" VerticalScrollBarVisibility="Visible" Block.LineHeight="1" Name="OutputRTB" Background="LightCyan" Margin="5" Width="600" Height="550" HorizontalAlignment="Left" VerticalAlignment="Top" IsReadOnly="True"/>
 			</StackPanel>
 			<StackPanel Orientation="Horizontal">
 				<Button Width="50" Height="50" FontWeight="Bold" Click="LoadFileButton_Click">Файл</Button>
@@ -28,5 +28,5 @@
 				<Button Width="130" Height="50" Click="LoadTemplate3_Click">Шаблон для 7</Button>
 			</StackPanel>
 		</StackPanel>
-	</Grid>
-</Window>	
+	</Grid>  
+</Window>	    

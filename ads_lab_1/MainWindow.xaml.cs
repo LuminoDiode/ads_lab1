@@ -2,15 +2,11 @@
 using System;
 using System.IO;
 using System.Linq;
-using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
-using System.Security.Policy;
-using System.Collections.Generic;
 
 namespace ads_lab_1
 {
@@ -22,21 +18,21 @@ namespace ads_lab_1
 		public MainWindow()
 		{
 			InitializeComponent();
-			this.InputRTB.AppendText("int a = 1;\r\nint b = 2;\r\nint c =3;\r\ndo {\r\na/b*c} \r\nwhile(a>b)\r\n;\r\nfor(int i =0; i<2;i++) a+=2;\r\nint a = 1;\r\nint b = 2;\r\nint c =3;\r\ndo {a/m*c} while(a>b);\r\nfor(int i =0; i<2;i++) a+=2;\r\ndo {a/m*c} while(a>b);");
+			InputRTB.AppendText("int a = 1;\r\nint b = 2;\r\nint c =3;\r\ndo {\r\na/b*c} \r\nwhile(a>b)\r\n;\r\nfor(int i =0; i<2;i++) a+=2;\r\nint a = 1;\r\nint b = 2;\r\nint c =3;\r\ndo {a/m*c} while(a>b);\r\nfor(int i =0; i<2;i++) a+=2;\r\ndo {a/m*c} while(a>b);");
 		}
 		private void LoadTemplate1_Click(object sender, RoutedEventArgs e)
 		{
-			this.setCurrentOuput("#define MYCONST 2147483999\r\n\r\nint testarr[255];int a = 1; int b = 2.2;\r\nint c =3;\r\n\r\ndo {\r\na/b*c} \r\nwhile(a>b);\r\n\r\na = 1;\r\ndo {a/m*c} while(a>b);\r\ndo {a//m**c} while(a>b);\r\n\r\nint c = 999;\r\nint\r\nt61 = 2,\r\nt62 = 2.,\r\nt63 = 2.2,\r\nt64 = 2.3e,\r\nt65 = 2.2e10,\r\nt66 = 2e11b;\r\nt67 = 2ee12;\r\n\r\nint bin = 0b11112;\r\nint hex = 0x11112;\r\nint ukn = 0m111;"
+			setCurrentOuput("#define MYCONST 2147483999\r\n\r\nint testarr[255];int a = 1; int b = 2.2;\r\nint c =3;\r\n\r\ndo {\r\na/b*c} \r\nwhile(a>b);\r\n\r\na = 1;\r\ndo {a/m*c} while(a>b);\r\ndo {a//m**c} while(a>b);\r\n\r\nint c = 999;\r\nint\r\nt61 = 2,\r\nt62 = 2.,\r\nt63 = 2.2,\r\nt64 = 2.3e,\r\nt65 = 2.2e10,\r\nt66 = 2e11b;\r\nt67 = 2ee12;\r\n\r\nint bin = 0b11112;\r\nint hex = 0x11112;\r\nint ukn = 0m111;"
 				, InputRTB);
 		}
 		private void LoadTemplate2_Click(object sender, RoutedEventArgs e)
 		{
-			this.setCurrentOuput(@"Трагедия Пушкина «Моцарт и Сальери» занимает всего десять страниц. О чем она? О зависти или о том, что «гений и злодейство — две вещи несовместные»? Есть ли оправдание Сальери, который, по версии Пушкина, отравил Моцарта?"
+			setCurrentOuput(@"Трагедия Пушкина «Моцарт и Сальери» занимает всего десять страниц. О чем она? О зависти или о том, что «гений и злодейство — две вещи несовместные»? Есть ли оправдание Сальери, который, по версии Пушкина, отравил Моцарта?"
 			, InputRTB);
 		}
 		private void LoadTemplate3_Click(object sender, RoutedEventArgs e)
 		{
-			this.setCurrentOuput(@"1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)+2))/3"
+			setCurrentOuput(@"1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)+2))/3"
 			, InputRTB);
 		}
 
@@ -59,65 +55,33 @@ namespace ads_lab_1
 				InputRTB.AppendText(File.ReadAllText(fd.FileName));
 			}
 		}
-
+		private int CountNewLinesBeforeIndex(string s, int index)
+		{
+			int count = 0;
+			for (int i = 1; i < index; i++)
+			{
+				if (s[i] == '\n' || s[i - 1] == '\r') count++;
+			}
+			return count;
+		}
 		private void Lab1_Click(object sender, RoutedEventArgs e)
 		{
+			var text = getCurrentInput();
+
 			// Оператор цикла do while и знаки математических операций / и *.
-			ClaimMatcher matcher = new ClaimMatcher(new Regex[] {
+			var matches = new ClaimMatcher(new Regex[] {
 				new Regex(@"(?<=(\s|\A))do[\s]*[{]\s*.+\s*[}][\s]*while[(].+[)]\s*[;]"),
 				new Regex(@"\w\s*[/]\s*\w"),
 				new Regex(@"\w\s*[*]\s*\w")}
-			);
+			).getMatches(text, out var indexes).ToList();
+			var lines = indexes.Select(x => CountNewLinesBeforeIndex(text, x)).ToList();
 
 			OutputRTB.Document.Blocks.Clear();
-			OutputRTB.AppendText(string.Join("\n\n", matcher.getMatches(getCurrentInput())));
+			for (int i = 0; i < matches.Count; i++)
+			{
+				OutputRTB.AppendText($"Строка {lines[i] + 1}:\r\n{matches[i]}\r\n\r\n\r\n");
+			}
 		}
-		//private void Lab1_Click2(object sender, RoutedEventArgs e)
-		//{
-
-		//	// Оператор цикла do while и знаки математических операций / и *.
-		//	ClaimMatcher matcher = new ClaimMatcher(new Regex[] {
-		//		new Regex(@"(?<=(\s|\A))do[\s]*[{]\s*.+\s*[}][\s]*while[(].+[)]\s*[;]"),
-		//		new Regex(@"[^/][/][^/]"),
-		//		new Regex(@"[^*][*][^*]")}
-		//	);
-
-		//	matcher.getMatchesIndexes(getCurrentInput()).ToList().ForEach(x =>
-		//	{
-		//		Debug.WriteLine($"Detected {countNewLinesBeforeIndex(x.Start)} \\r|\\n before start index");
-		//		Debug.WriteLine($"Detected {countNewLinesBeforeIndex(x.Start + x.Count)} \\r|\\n before stop index");
-		//		Debug.WriteLine($"Start index is adjusted from {x.Start} to {x.Start + countNewLinesBeforeIndex(x.Start)}");
-		//		Debug.WriteLine($"Stop index is adjusted from {x.Start+x.Count} to {x.Start + countNewLinesBeforeIndex(x.Start + x.Count)}");
-		//		try
-		//		{
-		//			HightlightText(
-		//			x.Start + countNewLinesBeforeIndex(x.Start), // оптимизация под несколько индексов одновременно?
-		//			x.Count + countNewLinesBeforeIndex(x.Start + x.Count),
-		//			this.InputRTB);
-		//		}
-		//		catch { }
-		//		Debug.WriteLine($"Text from {x.Start + countNewLinesBeforeIndex(x.Start)} to {x.Start + countNewLinesBeforeIndex(x.Start + x.Count)} is being highlighted");
-		//	});
-		//}
-		//private void HightlightText(int startIndex, int Count, RichTextBox RTB = null!)
-		//{
-		//	if (RTB is null) RTB = this.InputRTB;
-		//	var t = new TextRange(RTB.Document.ContentStart.GetPositionAtOffset(startIndex), RTB.Document.ContentStart.GetPositionAtOffset(startIndex + Count - 1)).Text;
-		//	var range = new TextRange(RTB.Document.ContentStart.GetPositionAtOffset(startIndex), RTB.Document.ContentStart.GetPositionAtOffset(startIndex + Count - 1));
-		//	range.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
-		//}	
-		//private int countNewLinesBeforeIndex(int index, RichTextBox RTB = null!)
-		//{
-		//	var text = getCurrentInput(RTB);
-		//	int seenNewLines = 0;
-		//	var toMatch = new char[] { '\r','\n' };
-		//	for (int i = 0; i < (index + seenNewLines-1) && i < text.Length-1; i++)
-		//	{
-		//		if (text[i]=='\r' && text[i+1]=='\n') seenNewLines++;
-		//	}
-		//	return 0;
-		//	return seenNewLines;
-		//}
 
 		private void Lab2_Click(object sender, RoutedEventArgs e)
 		{
@@ -136,7 +100,7 @@ namespace ads_lab_1
 
 		private void Lab4_Click(object sender, RoutedEventArgs e)
 		{
-			var text = new TextRange(InputRTB.Document.ContentStart, InputRTB.Document.ContentEnd).Text;
+			var text = getCurrentInput();
 			// Вариант 2 – для чётных номеров.
 			// В тексте сократить все слова после согласных букв, расположенных за первой гласной буквой или последовательными гласными буквами.
 			// Знаки препинания должны остаться без изменений.
@@ -199,24 +163,14 @@ namespace ads_lab_1
 			searchTypes
 				.Select(x => new
 				{
-					matches = new Regex((@"(?<=(\s|\A|[;])){MYVARTYPE}\s+(\w|\d|[,=\[\]]|\s|(\d+\.\d+))+(?=[;])").Replace(@"{MYVARTYPE}", x)).Matches(getCurrentInput())
+					matches = new Regex((@"(?<=(\s|\A|[;])){MYVARTYPE}(\s)+(\w|\d|[,=\[\]]|\s|(\d+\.\d+))+(?=[;])").Replace(@"{MYVARTYPE}", x)).Matches(text)
 						.SelectMany(m =>
 						{
-							var splitType = m.Value.Split(' ', 2);
-
-							Debug.WriteLine(string.Join(' ', splitType[1]
-								.Replace("\n", String.Empty)
-								.Replace("\r", String.Empty)
-								//.Replace("[", String.Empty)
-								//.Replace("]", String.Empty)
-								.Split("[],; =".ToCharArray(), System.StringSplitOptions.RemoveEmptyEntries)
-								.Select(x => x.Trim()).Distinct().Where(x => char.IsLetter(x[0]))));
+							var splitType = m.Value.Split("\n\r ".ToCharArray(), 2);
 
 							return splitType[1]
 								.Replace("\n", String.Empty)
 								.Replace("\r", String.Empty)
-								//.Replace("[", String.Empty)
-								//.Replace("]", String.Empty)
 								.Split("[],;".ToCharArray(), System.StringSplitOptions.RemoveEmptyEntries)
 								.Select(x => x.Split("=", System.StringSplitOptions.RemoveEmptyEntries)[0].Trim())
 								.Where(x => char.IsLetter(x[0]))
@@ -229,62 +183,32 @@ namespace ads_lab_1
 					.ForEach(m => text = new Regex((@"(?<=[^\w]+){MYVARNAME}(?!^\w+)").Replace(@"{MYVARNAME}", m.Name))
 					.Replace(text, x.typeName.Substring(0, 1) + m.Name))); ;
 
-			//Debug.WriteLine($"Found those var names:\n{string.Join("\n", foundVarNames.Select(x => x.typeName + " : " + string.Join(',', x.matches.Select(y => y.Name))))}");
-
-
-			//System.Collections.Generic.List<string> declaredNames = new();
-			//foundVarNames
-			//	.ForEach(x =>
-			//		x.matches.ForEach(m => text = new Regex((@"(?<=[^\w]+){MYVARNAME}(?!^\w+)").Replace(@"{MYVARNAME}", m.Name)).Replace(text, x.typeName.Substring(0, 1) + m.Name)));
-
 			setCurrentOuput(text);
 		}
-		//private System.Collections.Generic.List<DeclaredVariable> getVarNamesFromDeclaration(string declarationString)
-		//{
-		//	var splitType = declarationString.Split(' ', 2);
-
-		//	return splitType[1]
-		//		.Replace("\n", String.Empty)
-		//		.Replace("\r", String.Empty)
-		//		.Split(",;".ToCharArray(), System.StringSplitOptions.RemoveEmptyEntries)
-		//		.Select(x => x.Split("=", System.StringSplitOptions.RemoveEmptyEntries)[0].Trim())
-		//		.Select(x=> new DeclaredVariable { Type = splitType[0], Name=x }).ToList();
-		//}
-
 
 		private void Lab6_Click(object sender, RoutedEventArgs e)
 		{
 			var text = getCurrentInput();
-			/* Определить, содержатся ли в текстовых строках вещественные числа. 
-			 * Правила образования чисел соответствуют правилам языка C++. 
-			 * Вещественное число может быть записано в экспоненциальной форме «2.25e1» 
-			 * и/или в нормализованной форме «22.5».
-			 */
-			ClaimMatcher matcher = new ClaimMatcher(new Regex[] {
-				new Regex(@"(?<=^\w)\d+(\.?e?\d+)?(?!^\w)") }
-			);
 
 			var allowedSuffixes = "U,l,L,ul, uL, Ul, UL, lu, lU, Lu LU,ll,LL,ull, uLL, Ull, ULL, llu, llU, LLu LLU,f,F,l,L}"
 				.Split(" ,".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
-			var t = new Regex(@"(?<=(\W))\d+(\.?e?\d+)?(?=\W)").Matches(text).Select(x => x.Value);
-
-			//var decReg = new Regex(@"(?<=(\s|\A|[+\-=/*]+?))\d+(\.\d+)?(e\d+)?({SSFX})?(?=[+\-=/*;,\s])".Replace("{SSFX}", string.Join('|', allowedSuffixes)));
-			//var hexAndBinReg = new Regex(@"(?<=(\s|\A|[+\-=/*]+?))0x(\d|[ABCDEF])+(?=[+\-=/*;,\s])");
-			//var binReg = new Regex(@"(?<=(\s|\A|[+\-=/*]+?))0b(\d|[ABCDEF])+(?=[+\-=/*;,\s])");
-			setCurrentOuput(string.Join("\n\n", new Regex(@"(?<=(\s|\A|[\[\(+\-=/*]+?))((\d+(\.\d+)?(e\d+)?)|(0[xb]\d+))(?=[\]\)+\-=/*;,\s])").Matches(text).Select(x => x.Value)));
+			setCurrentOuput(string.Join("\n\n", new Regex(@"(?<=(\s|\A|[\[\(+\-=/*]+?))((\d+(\.\d+)?(e\d+)?)|(0[xb]\d+))(?=[\]\)+\-=/*;,\s])")
+				.Matches(text).Select(x => x.Value)));
 		}
 
 		private void Lab7_Click(object sender, RoutedEventArgs e)
 		{
-			var text = getCurrentInput().Replace("\r\n",String.Empty);
+			var text = getCurrentInput().Replace("\n", String.Empty).Replace("\r", String.Empty).Replace(" ", String.Empty);
 			var worker = new StringEvaluator();
+			worker.AddFunction("atan", x => Math.Atan(x));
+			worker.AddOperator("**", (x, y) => Math.Pow(x, y), 6);
 
 			try
 			{
 				setCurrentOuput(worker.Eval2(text).ToString());
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				MessageBox.Show(ex.Message);
 			}

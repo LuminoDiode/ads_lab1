@@ -2,32 +2,29 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Media.Media3D;
-using System.Windows.Media;
 
+[assembly: InternalsVisibleTo("Tests")]
 namespace ads_lab_1
 {
 	/* В выражении могут быть использованы целые числа, вещественные числа, арифметические операторы: +,-,*,/, 
 	* скобки (), а также функции и операторы в соответствии с вариантом. 
 	* 18.   sin
 	*/
-
 	public class StringEvaluator
 	{
-		public struct PrioritizedOperation
+		internal struct PrioritizedOperation
 		{
 			public string Operation;
 			public int Priority;
 		}
-		public struct PrioritizedOperationOnIndex
+		internal struct PrioritizedOperationOnIndex
 		{
 			public PrioritizedOperation Operation;
 			public int Index;
 		}
-		public struct PrioritizedOperator
+		internal struct PrioritizedOperator
 		{
 			public string Operator;
 			public int Priority;
@@ -38,23 +35,23 @@ namespace ads_lab_1
 				this.Priority = Priority;
 			}
 		}
-		public struct ExpressionIndex
+		internal struct ExpressionIndex
 		{
 			public int Start;
 			public int Count;
 		}
 
-		public Dictionary<string, Func<double, double>> FunctionsSignatures1 = new(); // 1 param
-		public Dictionary<string, Func<double, double, double>> FunctionsSignatures2 = new(); // 2 params
-		public Dictionary<string, Func<double, double, double, double>> FunctionsSignatures3 = new(); // 3 params
-		public Dictionary<string, Func<double, double, double>> OperatorsSignatures = new();
-		public List<PrioritizedOperator> OperatorsPriorities = new();
+		internal Dictionary<string, Func<double, double>> FunctionsSignatures1 = new(); // 1 param
+		internal Dictionary<string, Func<double, double, double>> FunctionsSignatures2 = new(); // 2 params
+		internal Dictionary<string, Func<double, double, double, double>> FunctionsSignatures3 = new(); // 3 params
+		internal Dictionary<string, Func<double, double, double>> OperatorsSignatures = new();
+		internal List<PrioritizedOperator> OperatorsPriorities = new();
 
-		public Regex isNumberRegex = new Regex(@"^[-]?\d+(\.\d+)?$");
+		internal Regex isNumberRegex = new Regex(@"^[-]?\d+(\.\d+)?$");
 
 
-		public Regex isFunctionCallRegex;
-		private Regex currentFunctionCallRegex => new Regex(@"^((\A|\))[-])?({ALLOWEDFUNCS})[\(](\n|.)+[\)]$".Replace("{ALLOWEDFUNCS}",
+		internal Regex isFunctionCallRegex;
+		internal Regex currentFunctionCallRegex => new Regex(@"^((\A|\))[-])?({ALLOWEDFUNCS})[\(](\n|.)+[\)]$".Replace("{ALLOWEDFUNCS}",
 				string.Join('|', FunctionsSignatures1.Keys.Concat(FunctionsSignatures2.Keys).Concat(FunctionsSignatures3.Keys).ToList())));
 
 		public StringEvaluator(bool useDefaultFunctions = true, bool useDefaultOperators = true)
@@ -86,26 +83,26 @@ namespace ads_lab_1
 				OperatorsPriorities.Add(new("+", 1));
 			}
 
-			this.isFunctionCallRegex = currentFunctionCallRegex;
+			isFunctionCallRegex = currentFunctionCallRegex;
 		}
 
 		private void UpdateFuncsRegex()
 		{
-			this.isFunctionCallRegex = currentFunctionCallRegex;
+			isFunctionCallRegex = currentFunctionCallRegex;
 		}
 		public void AddFunction(string funcName, Func<double, double> calcFunction)
 		{
-			this.FunctionsSignatures1.Add(funcName, calcFunction);
+			FunctionsSignatures1.Add(funcName, calcFunction);
 			UpdateFuncsRegex();
 		}
 		public void AddFunction(string funcName, Func<double, double, double> calcFunction)
 		{
-			this.FunctionsSignatures2.Add(funcName, calcFunction);
+			FunctionsSignatures2.Add(funcName, calcFunction);
 			UpdateFuncsRegex();
 		}
 		public void AddFunction(string funcName, Func<double, double, double, double> calcFunction)
 		{
-			this.FunctionsSignatures3.Add(funcName, calcFunction);
+			FunctionsSignatures3.Add(funcName, calcFunction);
 			UpdateFuncsRegex();
 		}
 
@@ -117,11 +114,11 @@ namespace ads_lab_1
 		/// </summary>
 		public void AddOperator(string operatorString, Func<double, double, double> calcFunction, int operatorPriority)
 		{
-			this.OperatorsSignatures.Add(operatorString, calcFunction);
-			this.OperatorsPriorities.Add(new(operatorString, operatorPriority));
+			OperatorsSignatures.Add(operatorString, calcFunction);
+			OperatorsPriorities.Add(new(operatorString, operatorPriority));
 		}
-		
-		public bool isOnThisIndex(string orig, string search, int startIndex)
+
+		internal bool isOnThisIndex(string orig, string search, int startIndex)
 		{
 			if (orig.Length < (startIndex + search.Length)) return false;
 
@@ -130,28 +127,28 @@ namespace ads_lab_1
 
 			return true;
 		}
-		public IEnumerable<PrioritizedOperationOnIndex> GetIndexesOfTopLevelOperators(string s, List<PrioritizedOperator> OrderedByPriority = null!, bool SortByPriority = true)
+		internal IEnumerable<PrioritizedOperationOnIndex> GetIndexesOfTopLevelOperators(string s, List<PrioritizedOperator> OrderedByPriority = null!, bool SortByPriority = true)
 		{
 			if (OrderedByPriority is null) OrderedByPriority = OperatorsPriorities;
-			List<PrioritizedOperationOnIndex> IndexesOfOperators = new();
-			int BracketsOpened = 0;
+			List<PrioritizedOperationOnIndex> indexesOfOperators = new();
+			int bracketsOpened = 0;
 			for (int i = 0; i < s.Length; i++)
 			{
 				if (s[i] == '(')
 				{
-					BracketsOpened++;
+					bracketsOpened++;
 				}
 				else if (s[i] == ')')
 				{
-					BracketsOpened--;
+					bracketsOpened--;
 				}
-				else if (BracketsOpened == 0)
+				else if (bracketsOpened == 0)
 				{
 					var found = OrderedByPriority.OrderByDescending(x => x.Operator.Length).ToList().Find(op => isOnThisIndex(s, op.Operator, i)).Operator;
 					if (found is not null)
 					{
 						if (found == "-" && (i == 0 || s[i - 1] == '(')) continue;
-						IndexesOfOperators.Add(new PrioritizedOperationOnIndex
+						indexesOfOperators.Add(new PrioritizedOperationOnIndex
 						{
 
 							Operation = new()
@@ -167,16 +164,16 @@ namespace ads_lab_1
 			}
 
 #if DEBUG
-			var t = IndexesOfOperators.OrderByDescending(x => x.Operation.Priority).ToList();
+			var t = indexesOfOperators.OrderByDescending(x => x.Operation.Priority).ToList();
 #endif
 
 			if (SortByPriority)
-				return IndexesOfOperators.OrderByDescending(x => x.Operation.Priority);
+				return indexesOfOperators.OrderByDescending(x => x.Operation.Priority);
 			else
-				return IndexesOfOperators;
+				return indexesOfOperators;
 		}
 
-		public int? GetIndexOfFirstPriorTopOp(string s, out int opLen)
+		internal int? GetIndexOfFirstPriorTopOp(string s, out int opLen)
 		{
 			var t = GetIndexesOfTopLevelOperators(s, SortByPriority: true).ToList();
 			if (t.Any())
@@ -192,21 +189,21 @@ namespace ads_lab_1
 		}
 
 		[Obsolete]
-		public void GetExprsForOpAt(string s, int opIndex, int opLen, out string Left, out string Right)
+		internal void GetExprsForOpAt(string s, int opIndex, int opLen, out string Left, out string Right)
 		{
 			getIndexesOfExprs(s, opIndex, opLen, out var exprLeft, out var exprRight);
 			Left = s.Substring(exprLeft.Start, exprLeft.Count);
 			Right = s.Substring(exprRight.Start, exprRight.Count);
 			return;
 		}
-		public void GetExprsForOpAt(string s, int opIndex, int opLen, out string Left, out string Right, out ExpressionIndex LeftIndex, out ExpressionIndex RightIndex)
+		internal void GetExprsForOpAt(string s, int opIndex, int opLen, out string Left, out string Right, out ExpressionIndex LeftIndex, out ExpressionIndex RightIndex)
 		{
 			getIndexesOfExprs(s, opIndex, opLen, out LeftIndex, out RightIndex);
 			Left = s.Substring(LeftIndex.Start, LeftIndex.Count);
 			Right = s.Substring(RightIndex.Start, RightIndex.Count);
 			return;
 		}
-		private void getIndexesOfExprs(string s, int opIndex, int opLen, out ExpressionIndex Left, out ExpressionIndex Right)
+		internal void getIndexesOfExprs(string s, int opIndex, int opLen, out ExpressionIndex Left, out ExpressionIndex Right)
 		{
 			int? leftClosestOp = null, rightClosestOp = null;
 			int? leftClosestOpLen = null, rightClosestOpLen = null;
@@ -234,8 +231,7 @@ namespace ads_lab_1
 			else
 				Right = Right = new ExpressionIndex() { Start = opIndex + opLen, Count = s.Length - (opIndex + opLen) };
 		}
-
-		public int GetParametersOfFuncCall(string s, out List<string> parameters)
+		internal int GetParametersOfFuncCall(string s, out List<string> parameters)
 		{
 			int count = 0;
 			var indexOfBracket = s.IndexOf('(');
@@ -273,85 +269,78 @@ namespace ads_lab_1
 		// Порядок выбора случая важен !!!
 		public double Eval2(string s)
 		{
-			try
+			Debug.WriteLine($"Evaluation of string \'{s}\' started.");
+
+			if (new Regex(@"\s").IsMatch(s)) throw new ArgumentException("White-spaces is not allowed in the expression");
+
+			if (isNumberRegex.IsMatch(s)) return double.Parse(s);
+
+			var opToCalc = GetIndexOfFirstPriorTopOp(s, out var len);
+			if (opToCalc is not null)
 			{
-				Debug.WriteLine($"Evaluation of string \'{s}\' started.");
+				GetExprsForOpAt(s, opToCalc.Value, len, out var left, out var right, out var leftReplace, out var rightReplace);
+				var operation = s.Substring(opToCalc.Value, len);
 
-				if (new Regex(@"\s").IsMatch(s)) throw new ArgumentException("White-spaces is not allowed in the expression");
+				if (!OperatorsSignatures.TryGetValue(operation, out var MyFunc))
+					throw new ArgumentException("Unknown operator found.");
 
-				if (isNumberRegex.IsMatch(s)) return double.Parse(s);
-
-				var opToCalc = GetIndexOfFirstPriorTopOp(s, out var len);
-				if (opToCalc is not null)
-				{
-					GetExprsForOpAt(s, opToCalc.Value, len, out var left, out var right, out var leftReplace, out var rightReplace);
-					var operation = s.Substring(opToCalc.Value, len);
-
-					if (!OperatorsSignatures.TryGetValue(operation, out var MyFunc))
-						throw new ArgumentException("Unknown operator found.");
-
-					double evaluated = MyFunc(Eval2(left), Eval2(right));
+				double evaluated = MyFunc(Eval2(left), Eval2(right));
 
 
-					return evaluated is double.NaN ? evaluated :
-						Eval2(s.Remove(leftReplace.Start, leftReplace.Count + rightReplace.Count + len).Insert(leftReplace.Start, evaluated.ToString()));
-				}
-
-				if (s.StartsWith("-("))
-				{
-					return Eval2(s.Insert(1, "1*"));
-				};
-
-				if (s.StartsWith('(') && s.EndsWith(')'))
-				{
-
-					return Eval2(s.Substring(1, s.Length - 2));
-				};
-
-				if (isFunctionCallRegex.IsMatch(s))
-				{
-					var indexOfBracket = s.IndexOf('(');
-					var funcName = s.Substring(0, indexOfBracket);
-					var numOfParams = GetParametersOfFuncCall(s, out var parameters);
-
-					bool negative = false;
-					if (funcName.StartsWith('-'))
-					{
-						funcName = funcName.Substring(1);
-						negative = true;
-					}
-					if (numOfParams == 1)
-					{
-						if (!FunctionsSignatures1.TryGetValue(funcName, out var func))
-						{
-							throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
-						}
-						return (negative ? -1 : 1) * func(Eval2(parameters[0]));
-					}
-					else if (numOfParams == 2)
-					{
-						if (!FunctionsSignatures2.TryGetValue(funcName, out var func))
-						{
-							throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
-						}
-						return (negative ? -1 : 1) * func(Eval2(parameters[0]), Eval2(parameters[1]));
-					}
-					else if (numOfParams == 3)
-					{
-						if (!FunctionsSignatures3.TryGetValue(funcName, out var func))
-						{
-							throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
-						}
-						return (negative ? -1 : 1) * func(Eval2(parameters[0]), Eval2(parameters[1]), Eval2(parameters[2]));
-					}
-				}
-
-				throw new ArgumentException($"Could not determinate the type of expression \'{s}\'.");
+				return evaluated is double.NaN ? evaluated :
+					Eval2(s.Remove(leftReplace.Start, leftReplace.Count + rightReplace.Count + len).Insert(leftReplace.Start, evaluated.ToString()));
 			}
-			catch (Exception e)
+
+			if (s.StartsWith("-("))
 			{
-				throw new ArgumentException("An error occured during the evaluation", e);
+				return Eval2(s.Insert(1, "1*"));
+			};
+
+			if (s.StartsWith('(') && s.EndsWith(')'))
+			{
+
+				return Eval2(s.Substring(1, s.Length - 2));
+			};
+
+			if (isFunctionCallRegex.IsMatch(s))
+			{
+				var indexOfBracket = s.IndexOf('(');
+				var funcName = s.Substring(0, indexOfBracket);
+				var numOfParams = GetParametersOfFuncCall(s, out var parameters);
+
+				bool negative = false;
+				if (funcName.StartsWith('-'))
+				{
+					funcName = funcName.Substring(1);
+					negative = true;
+				}
+				if (numOfParams == 1)
+				{
+					if (!FunctionsSignatures1.TryGetValue(funcName, out var func))
+					{
+						throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
+					}
+					return (negative ? -1 : 1) * func(Eval2(parameters[0]));
+				}
+				else if (numOfParams == 2)
+				{
+					if (!FunctionsSignatures2.TryGetValue(funcName, out var func))
+					{
+						throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
+					}
+					return (negative ? -1 : 1) * func(Eval2(parameters[0]), Eval2(parameters[1]));
+				}
+				else if (numOfParams == 3)
+				{
+					if (!FunctionsSignatures3.TryGetValue(funcName, out var func))
+					{
+						throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
+					}
+					return (negative ? -1 : 1) * func(Eval2(parameters[0]), Eval2(parameters[1]), Eval2(parameters[2]));
+				}
 			}
+
+			throw new ArgumentException($"Could not determinate the type of expression \'{s}\'.");
 		}
 	}
 }
