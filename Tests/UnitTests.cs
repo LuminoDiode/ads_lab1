@@ -1,6 +1,7 @@
 using ads_lab_1;
 using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Newtonsoft.Json.Linq;
+using System.Net.Sockets;
 using System.Windows.Controls;
 using Xunit.Abstractions;
 using static ads_lab_1.StringEvaluator;
@@ -388,9 +389,11 @@ namespace Tests
 			myWorker.AddOperator("&", (left, right) => left / 4 + right / 4, 2);
 			myWorker.AddOperator("//", (left, right) => Math.Round(left/right), 2);
 			myWorker.AddOperator("+", (left, right) => left+right, 1);
+			myWorker.AddFunction("min", (x, y) => x < y ? x : y);
+			myWorker.AddFunction("min", (x, y, z) => Math.Min(Math.Min(x, y), z));
 
-			s = "25//(4&plsdont(1,2)+4&&plsdont(1,2)+4&plsdont(1,2))"; // 25/12
-			value = 2;
+			s = "min(25//(4&plsdont(1,2)+4&&plsdont(1,2)+4&plsdont(1,2)),4)+min(-1,1,-2)"; // min(25/12,4) + min(-1,1,-2) == 0
+			value = 0;
 			Assert.Equal(value, myWorker.Eval2(s), 10);
 		}
 	}

@@ -202,6 +202,9 @@ namespace ads_lab_1
 			var text = getCurrentInput().Replace("\n", String.Empty).Replace("\r", String.Empty).Replace(" ", String.Empty);
 			var worker = new StringEvaluator();
 			worker.AddFunction("atan", x => Math.Atan(x));
+			worker.AddFunction("min", (x, y) => x < y ? x : y);
+			worker.AddFunction("min", (x, y) => x < y ? x : y);
+			worker.AddFunction("min", (x, y, z) => Math.Min(Math.Min(x, y), z));
 			worker.AddOperator("**", (x, y) => Math.Pow(x, y), 6);
 
 			try
