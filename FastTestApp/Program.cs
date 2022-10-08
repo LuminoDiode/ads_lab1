@@ -6,14 +6,32 @@ internal class Program
 	private static void Main(string[] args)
 	{
 		var myWorker = new StringEvaluator();
-		myWorker.AddFunction("plsdont", (x, y) => 2 * x + 3 * y);
-		myWorker.AddOperator("&&", (left, right) => left / 2 + right / 2, 2);
-		myWorker.AddOperator("&", (left, right) => left / 4 + right / 4, 2);
+		var evalFunction = myWorker.Eval2;
+		string s; double value;
 
+		s = "1+log10(" +
+				"tan(22*cos(122)+2)" +
+				"+" +
+				"pow(22,sin(122)+2)" +
+			")/3".Replace(" ", String.Empty);
+		value = 1 + Math.Log10(
+				Math.Tan(22 * Math.Cos(122) + 2)
+				+
+				Math.Pow(22, Math.Sin(122) + 2)
+				) / 3;
 
+		s = @"1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)+2))/3";
+		value = 1 + Math.Log10(
+				-Math.Tan(22 * Math.Cos(122) + 2)
+				+
+				Math.Pow(22, -Math.Sin(122) + 2)
+				) / 3;
 
-		string s = "4&plsdont(1,2)+4&&plsdont(1,2)+4&plsdont(1,2)"; // 3+6+3
-		var value = 12;
-		Console.WriteLine(myWorker.Eval2(s));
+		s = @"-(-(1+log10(-tan(22*cos(122)+2)+pow(22,-sin(122)+2))/3))";
+		value = 1 + Math.Log10(
+				-Math.Tan(22 * Math.Cos(122) + 2)
+				+
+				Math.Pow(22, -Math.Sin(122) + 2)
+				) / 3;
 	}
 }

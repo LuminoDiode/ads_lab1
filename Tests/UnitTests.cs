@@ -382,11 +382,12 @@ namespace Tests
 		{
 			string s; double value;
 
-			var myWorker = new StringEvaluator();
+			var myWorker = new StringEvaluator(false,false);
 			myWorker.AddFunction("plsdont", (x, y) => 2 * x + 3 * y);
 			myWorker.AddOperator("&&", (left, right) => left / 2 + right / 2, 2);
 			myWorker.AddOperator("&", (left, right) => left / 4 + right / 4, 2);
 			myWorker.AddOperator("//", (left, right) => Math.Round(left/right), 2);
+			myWorker.AddOperator("+", (left, right) => left+right, 1);
 
 			s = "25//(4&plsdont(1,2)+4&&plsdont(1,2)+4&plsdont(1,2))"; // 25/12
 			value = 2;
