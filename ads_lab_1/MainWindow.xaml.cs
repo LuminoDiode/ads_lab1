@@ -86,7 +86,7 @@ namespace ads_lab_1
 		private void Lab2_Click(object sender, RoutedEventArgs e)
 		{
 			// 18. целой длинной константой. Модуль > 2^31
-			var found = new Regex(@"(?<=(\s|\A)[#]define\s+MYCONST\s+)\d+").Match(getCurrentInput()).Value;
+			var found = new Regex(@"(?<=(\s|\A)[#]define\s+MYCONST\s+)\d+(?=\s?(\r|\n)+)").Match(getCurrentInput()).Value;
 			if (!string.IsNullOrEmpty(found) && long.TryParse(found, out var parsed) && Math.Abs(parsed) > Math.Pow(2, 31))
 			{
 				MessageBox.Show($"Объявлена длинная целая константа MYCONST со значением {parsed}");
@@ -203,7 +203,6 @@ namespace ads_lab_1
 			var worker = new StringEvaluator();
 			worker.AddFunction("atan", x => Math.Atan(x));
 			worker.AddFunction("min", (x, y) => x < y ? x : y);
-			worker.AddFunction("min", (x, y) => x < y ? x : y);
 			worker.AddFunction("min", (x, y, z) => Math.Min(Math.Min(x, y), z));
 			worker.AddOperator("**", (x, y) => Math.Pow(x, y), 6);
 
@@ -213,7 +212,7 @@ namespace ads_lab_1
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show(ex.Message);
+				MessageBox.Show(ex.Message, "Attention",MessageBoxButton.OK,MessageBoxImage.Warning);
 			}
 		}
 
