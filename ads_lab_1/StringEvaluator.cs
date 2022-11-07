@@ -16,7 +16,7 @@ namespace ads_lab_1
 	{
 		internal struct PrioritizedOperation
 		{
-			public string Operation;
+			public string OperationString;
 			public int Priority;
 		}
 		internal struct PrioritizedOperationOnIndex
@@ -130,6 +130,7 @@ namespace ads_lab_1
 		internal IEnumerable<PrioritizedOperationOnIndex> GetIndexesOfTopLevelOperators(string s, List<PrioritizedOperator> OrderedByPriority = null!, bool SortByPriority = true)
 		{
 			if (OrderedByPriority is null) OrderedByPriority = OperatorsPriorities;
+			var OrderedByPriorityThenByLength = OrderedByPriority.OrderByDescending(x => x.Operator.Length).ToList();
 			List<PrioritizedOperationOnIndex> indexesOfOperators = new();
 			int bracketsOpened = 0;
 			for (int i = 0; i < s.Length; i++)
@@ -144,7 +145,7 @@ namespace ads_lab_1
 				}
 				else if (bracketsOpened == 0)
 				{
-					var found = OrderedByPriority.OrderByDescending(x => x.Operator.Length).ToList().Find(op => isOnThisIndex(s, op.Operator, i)).Operator;
+					var found = OrderedByPriorityThenByLength.Find(op => isOnThisIndex(s, op.Operator, i)).Operator;
 					if (found is not null)
 					{
 						if (found == "-" && (i == 0 || s[i - 1] == '(')) continue;
@@ -153,7 +154,7 @@ namespace ads_lab_1
 
 							Operation = new()
 							{
-								Operation = found,
+								OperationString = found,
 								Priority = OrderedByPriority.Find(x => x.Operator.Equals(found)).Priority
 							},
 							Index = i
@@ -178,7 +179,7 @@ namespace ads_lab_1
 			var t = GetIndexesOfTopLevelOperators(s, SortByPriority: true).ToList();
 			if (t.Any())
 			{
-				opLen = t.First().Operation.Operation.Length;
+				opLen = t.First().Operation.OperationString.Length;
 				return t.First().Index;
 			}
 			else
@@ -212,13 +213,13 @@ namespace ads_lab_1
 			{
 				var t = topLevelOps.Where(x => x.Index < opIndex).MaxBy(x => x.Index);
 				leftClosestOp = t.Index;
-				leftClosestOpLen = t.Operation.Operation.Length;
+				leftClosestOpLen = t.Operation.OperationString.Length;
 			}
 			if (topLevelOps.Any(x => x.Index > opIndex))
 			{
 				var t = topLevelOps.Where(x => x.Index > opIndex).MinBy(x => x.Index);
 				rightClosestOp = t.Index;
-				rightClosestOpLen = t.Operation.Operation.Length;
+				rightClosestOpLen = t.Operation.OperationString.Length;
 			}
 
 			if (leftClosestOp.HasValue && leftClosestOpLen.HasValue)
@@ -340,6 +341,9 @@ namespace ads_lab_1
 				}
 			}
 
+			if (s.Equals("∞")) return double.PositiveInfinity;
+			if (s.Equals("-∞")) return double.NegativeInfinity;
+			if (s.Length == 0) return 0;
 			throw new ArgumentException($"Could not determinate the type of expression \'{s}\'.");
 		}
 	}
