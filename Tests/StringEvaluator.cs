@@ -8,16 +8,16 @@ using static ads_lab_1.StringEvaluator;
 
 namespace Tests
 {
-	public class UnitTests
+	public class StringEvaluator
 	{
 		private readonly ITestOutputHelper output;
-		private readonly StringEvaluator worker;
+		private readonly ads_lab_1.StringEvaluator worker;
 		private readonly Func<string, double> evalFunction;
 
-		public UnitTests(ITestOutputHelper output)
+		public StringEvaluator(ITestOutputHelper output)
 		{
 			this.output = output;
-			worker = new StringEvaluator();
+            worker = new ads_lab_1.StringEvaluator();
 			evalFunction = worker.Eval2;
 		}
 
@@ -383,7 +383,7 @@ namespace Tests
 		{
 			string s; double value;
 
-			var myWorker = new StringEvaluator(false,false);
+			var myWorker = new ads_lab_1.StringEvaluator(false,false);
 			myWorker.AddFunction("plsdont", (x, y) => 2 * x + 3 * y);
 			myWorker.AddOperator("&&", (left, right) => left / 2 + right / 2, 2);
 			myWorker.AddOperator("&", (left, right) => left / 4 + right / 4, 2);
