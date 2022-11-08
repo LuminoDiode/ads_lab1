@@ -26,12 +26,12 @@ namespace ads_lab_1
 		}
 		internal struct PrioritizedOperator
 		{
-			public string Operator;
+			public string OperatorString;
 			public int Priority;
 
 			public PrioritizedOperator(string Operator, int Priority)
 			{
-				this.Operator = Operator;
+				this.OperatorString = Operator;
 				this.Priority = Priority;
 			}
 		}
@@ -41,34 +41,40 @@ namespace ads_lab_1
 			public int Count;
 		}
 
-		internal Dictionary<string, Func<double, double>> FunctionsSignatures1 = new(); // 1 param
-		internal Dictionary<string, Func<double, double, double>> FunctionsSignatures2 = new(); // 2 params
-		internal Dictionary<string, Func<double, double, double, double>> FunctionsSignatures3 = new(); // 3 params
+
+		internal Dictionary<int, Dictionary<string, Delegate>> FunctionsSignaturesByParametersNumber = new();
+		//internal Dictionary<string, Func<double, double>> FunctionsSignatures1 = new(); // 1 param
+		//internal Dictionary<string, Func<double, double, double>> FunctionsSignatures2 = new(); // 2 params
+		//internal Dictionary<string, Func<double, double, double, double>> FunctionsSignatures3 = new(); // 3 params
 		internal Dictionary<string, Func<double, double, double>> OperatorsSignatures = new();
-		internal List<PrioritizedOperator> OperatorsPriorities = new();
+		internal List<PrioritizedOperator> OperatorsByPriorityDescending = new();
 
 		internal Regex isNumberRegex = new Regex(@"^[-]?\d+(\.\d+)?$");
 
 
 		internal Regex isFunctionCallRegex;
-		internal Regex currentFunctionCallRegex => new Regex(@"^((\A|\))[-])?({ALLOWEDFUNCS})[\(](\n|.)+[\)]$".Replace("{ALLOWEDFUNCS}",
-				string.Join('|', FunctionsSignatures1.Keys.Concat(FunctionsSignatures2.Keys).Concat(FunctionsSignatures3.Keys).ToList())));
+		internal Regex currentFunctionCallRegex => new Regex(@"^((\A|\))[-])?({ALLOWEDFUNCS})[\(](\n|.?)+[\)]$".Replace("{ALLOWEDFUNCS}",
+				string.Join('|', FunctionsSignaturesByParametersNumber.Values.SelectMany(v=> v.Keys).ToList())));
 
-		public StringEvaluator(bool useDefaultFunctions = true, bool useDefaultOperators = true)
+		public StringEvaluator(bool addDefaultFunctions = true, bool addDefaultOperators = true)
 		{
 			Debug.WriteLine($"Constructor of {nameof(StringEvaluator)} is being called.");
 
-			if (useDefaultFunctions)
+			if (addDefaultFunctions)
 			{
-				FunctionsSignatures1.Add("sin", Math.Sin);
-				FunctionsSignatures1.Add("cos", Math.Cos);
-				FunctionsSignatures2.Add("pow", Math.Pow);
-				FunctionsSignatures1.Add("tan", Math.Tan);
-				FunctionsSignatures1.Add("log10", Math.Log10);
-				FunctionsSignatures1.Add("log2", Math.Log2);
-				FunctionsSignatures1.Add("ln", Math.Log);
+				FunctionsSignaturesByParametersNumber.Add(1, new());
+				FunctionsSignaturesByParametersNumber.Add(2, new());
+
+				FunctionsSignaturesByParametersNumber[1].Add("sin", Math.Sin);
+				FunctionsSignaturesByParametersNumber[1].Add("cos", Math.Cos);
+				FunctionsSignaturesByParametersNumber[1].Add("tan", Math.Tan);
+				FunctionsSignaturesByParametersNumber[1].Add("log10", Math.Log10);
+				FunctionsSignaturesByParametersNumber[1].Add("log2", Math.Log2);
+				FunctionsSignaturesByParametersNumber[1].Add("ln", new Func<double,double>(x=> Math.Log(x)));
+
+				FunctionsSignaturesByParametersNumber[2].Add("pow", Math.Pow);
 			}
-			if (useDefaultOperators)
+			if (addDefaultOperators)
 			{
 				OperatorsSignatures.Add("^^", (x, y) => Math.Pow(x, y));
 				OperatorsSignatures.Add("/", (x, y) => x / y);
@@ -76,11 +82,11 @@ namespace ads_lab_1
 				OperatorsSignatures.Add("-", (x, y) => x - y);
 				OperatorsSignatures.Add("+", (x, y) => x + y);
 
-				OperatorsPriorities.Add(new("^^", 10));
-				OperatorsPriorities.Add(new("/", 5));
-				OperatorsPriorities.Add(new("*", 5));
-				OperatorsPriorities.Add(new("-", 1));
-				OperatorsPriorities.Add(new("+", 1));
+				OperatorsByPriorityDescending.Add(new("^^", 10));
+				OperatorsByPriorityDescending.Add(new("/", 5));
+				OperatorsByPriorityDescending.Add(new("*", 5));
+				OperatorsByPriorityDescending.Add(new("-", 1));
+				OperatorsByPriorityDescending.Add(new("+", 1));
 			}
 
 			isFunctionCallRegex = currentFunctionCallRegex;
@@ -90,21 +96,128 @@ namespace ads_lab_1
 		{
 			isFunctionCallRegex = currentFunctionCallRegex;
 		}
+
+		public void AddFunction(string funcName, Func<double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(0))
+				FunctionsSignaturesByParametersNumber.Add(0, new());
+			FunctionsSignaturesByParametersNumber[0].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
 		public void AddFunction(string funcName, Func<double, double> calcFunction)
 		{
-			FunctionsSignatures1.Add(funcName, calcFunction);
+			if(!FunctionsSignaturesByParametersNumber.ContainsKey(1))
+				FunctionsSignaturesByParametersNumber.Add(1, new());
+			FunctionsSignaturesByParametersNumber[1].Add(funcName, calcFunction);
 			UpdateFuncsRegex();
 		}
 		public void AddFunction(string funcName, Func<double, double, double> calcFunction)
 		{
-			FunctionsSignatures2.Add(funcName, calcFunction);
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(2))
+				FunctionsSignaturesByParametersNumber.Add(2, new());
+			FunctionsSignaturesByParametersNumber[2].Add(funcName, calcFunction);
 			UpdateFuncsRegex();
 		}
 		public void AddFunction(string funcName, Func<double, double, double, double> calcFunction)
 		{
-			FunctionsSignatures3.Add(funcName, calcFunction);
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(3))
+				FunctionsSignaturesByParametersNumber.Add(3, new());
+			FunctionsSignaturesByParametersNumber[3].Add(funcName, calcFunction);
 			UpdateFuncsRegex();
 		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(4))
+				FunctionsSignaturesByParametersNumber.Add(4, new());
+			FunctionsSignaturesByParametersNumber[4].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(5))
+				FunctionsSignaturesByParametersNumber.Add(5, new());
+			FunctionsSignaturesByParametersNumber[5].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(6))
+				FunctionsSignaturesByParametersNumber.Add(6, new());
+			FunctionsSignaturesByParametersNumber[6].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(7))
+				FunctionsSignaturesByParametersNumber.Add(7, new());
+			FunctionsSignaturesByParametersNumber[7].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(8))
+				FunctionsSignaturesByParametersNumber.Add(8, new());
+			FunctionsSignaturesByParametersNumber[8].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(9))
+				FunctionsSignaturesByParametersNumber.Add(9, new());
+			FunctionsSignaturesByParametersNumber[9].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(10))
+				FunctionsSignaturesByParametersNumber.Add(10, new());
+			FunctionsSignaturesByParametersNumber[10].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(11))
+				FunctionsSignaturesByParametersNumber.Add(11, new());
+			FunctionsSignaturesByParametersNumber[11].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(12))
+				FunctionsSignaturesByParametersNumber.Add(12, new());
+			FunctionsSignaturesByParametersNumber[12].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(13))
+				FunctionsSignaturesByParametersNumber.Add(13, new());
+			FunctionsSignaturesByParametersNumber[13].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(14))
+				FunctionsSignaturesByParametersNumber.Add(14, new());
+			FunctionsSignaturesByParametersNumber[14].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(15))
+				FunctionsSignaturesByParametersNumber.Add(15, new());
+			FunctionsSignaturesByParametersNumber[15].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double> calcFunction)
+		{
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(15))
+				FunctionsSignaturesByParametersNumber.Add(15, new());
+			FunctionsSignaturesByParametersNumber[15].Add(funcName, calcFunction);
+			UpdateFuncsRegex();
+		}
+
+
 
 		/// <summary>
 		/// The default operators priority is: <br/>
@@ -115,7 +228,8 @@ namespace ads_lab_1
 		public void AddOperator(string operatorString, Func<double, double, double> calcFunction, int operatorPriority)
 		{
 			OperatorsSignatures.Add(operatorString, calcFunction);
-			OperatorsPriorities.Add(new(operatorString, operatorPriority));
+			OperatorsByPriorityDescending.Add(new(operatorString, operatorPriority));
+			OperatorsByPriorityDescending = OperatorsByPriorityDescending.OrderByDescending(x => x.Priority).ToList();
 		}
 
 		internal bool isOnThisIndex(string orig, string search, int startIndex)
@@ -129,8 +243,8 @@ namespace ads_lab_1
 		}
 		internal IEnumerable<PrioritizedOperationOnIndex> GetIndexesOfTopLevelOperators(string s, List<PrioritizedOperator> OrderedByPriority = null!, bool SortByPriority = true)
 		{
-			if (OrderedByPriority is null) OrderedByPriority = OperatorsPriorities;
-			var OrderedByPriorityThenByLength = OrderedByPriority.OrderByDescending(x => x.Operator.Length).ToList();
+			if (OrderedByPriority is null) OrderedByPriority = OperatorsByPriorityDescending;
+			var OrderedByPriorityThenByLength = OrderedByPriority.OrderByDescending(x => x.OperatorString.Length).ToList();
 			List<PrioritizedOperationOnIndex> indexesOfOperators = new();
 			int bracketsOpened = 0;
 			for (int i = 0; i < s.Length; i++)
@@ -145,7 +259,7 @@ namespace ads_lab_1
 				}
 				else if (bracketsOpened == 0)
 				{
-					var found = OrderedByPriorityThenByLength.Find(op => isOnThisIndex(s, op.Operator, i)).Operator;
+					var found = OrderedByPriorityThenByLength.Find(op => isOnThisIndex(s, op.OperatorString, i)).OperatorString;
 					if (found is not null)
 					{
 						if (found == "-" && (i == 0 || s[i - 1] == '(')) continue;
@@ -155,7 +269,7 @@ namespace ads_lab_1
 							Operation = new()
 							{
 								OperationString = found,
-								Priority = OrderedByPriority.Find(x => x.Operator.Equals(found)).Priority
+								Priority = OrderedByPriority.Find(x => x.OperatorString.Equals(found)).Priority
 							},
 							Index = i
 						});
@@ -241,6 +355,8 @@ namespace ads_lab_1
 
 			parameters = new();
 
+			if (s[prevCommaIndex + 1] == ')') return 0;
+
 			for (int i = indexOfBracket + 1; i < (s.Length - 1); i++)
 			{
 				if (s[i] == '(')
@@ -299,7 +415,6 @@ namespace ads_lab_1
 
 			if (s.StartsWith('(') && s.EndsWith(')'))
 			{
-
 				return Eval2(s.Substring(1, s.Length - 2));
 			};
 
@@ -315,29 +430,16 @@ namespace ads_lab_1
 					funcName = funcName.Substring(1);
 					negative = true;
 				}
-				if (numOfParams == 1)
+
+				if(!FunctionsSignaturesByParametersNumber[numOfParams].TryGetValue(funcName,out var func))
 				{
-					if (!FunctionsSignatures1.TryGetValue(funcName, out var func))
-					{
-						throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
-					}
-					return (negative ? -1 : 1) * func(Eval2(parameters[0]));
+					throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
 				}
-				else if (numOfParams == 2)
+				else
 				{
-					if (!FunctionsSignatures2.TryGetValue(funcName, out var func))
-					{
-						throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
-					}
-					return (negative ? -1 : 1) * func(Eval2(parameters[0]), Eval2(parameters[1]));
-				}
-				else if (numOfParams == 3)
-				{
-					if (!FunctionsSignatures3.TryGetValue(funcName, out var func))
-					{
-						throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
-					}
-					return (negative ? -1 : 1) * func(Eval2(parameters[0]), Eval2(parameters[1]), Eval2(parameters[2]));
+					object[] paramsToMethod  = parameters.Select(p => (object)Eval2(p)).ToArray();
+					// too many code required for doing this without dynamic
+					return (negative ? -1 : 1) * (double)func.DynamicInvoke(paramsToMethod)!;
 				}
 			}
 

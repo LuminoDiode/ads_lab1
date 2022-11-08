@@ -269,13 +269,13 @@ namespace Tests
 		{
 			string s; double value;
 
-			s = "sin(1)";
-			value = Math.Sin(1d);
-			Assert.Equal(value, evalFunction(s));
+			//s = "sin(1)";
+			//value = Math.Sin(1d);
+			//Assert.Equal(value, evalFunction(s));
 
-			s = "sin(1.3+2)";
-			value = Math.Sin(1.3 + 2);
-			Assert.Equal(value, evalFunction(s));
+			//s = "sin(1.3+2)";
+			//value = Math.Sin(1.3 + 2);
+			//Assert.Equal(value, evalFunction(s));
 
 			s = "pow(sin(1.3+2),cos(122))";
 			value = Math.Pow(Math.Sin(1.3 + 2), Math.Cos(122));
@@ -394,6 +394,21 @@ namespace Tests
 
 			s = "min(25//(4&plsdont(1,2)+4&&plsdont(1,2)+4&plsdont(1,2)),4)+min(-1,1,-2)"; // min(25/12,4) + min(-1,1,-2) == 0
 			value = 0;
+			Assert.Equal(value, myWorker.Eval2(s), 10);
+		}
+
+		[Fact]
+		public void Eval2_8() // any number of parameters
+		{
+			string s; double value;
+
+			var myWorker = new ads_lab_1.StringEvaluator(true, true);
+			myWorker.AddFunction("plsdont", (x) => x*2);
+			myWorker.AddFunction("plsdont2",(a,b,c,d,e,f,g) => a + b + c + d + e+f+g);
+			myWorker.AddFunction("plsdont3", ()=>100);
+
+			s = "plsdont(1)*plsdont2(1,2,3,4,5,6,7)+plsdont3()";
+			value = 2*(1+2+3+4+5+6+7)+100; 
 			Assert.Equal(value, myWorker.Eval2(s), 10);
 		}
 	}
