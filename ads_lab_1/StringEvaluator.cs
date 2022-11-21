@@ -23,6 +23,17 @@ namespace ads_lab_1
 		{
 			public PrioritizedOperation Operation;
 			public int Index;
+
+			public bool Equals(PrioritizedOperationOnIndex other)
+			{
+				return (
+						Index.Equals(other.Index)
+						&&
+						Operation.OperationString.Equals(other.Operation.OperationString)
+						&&
+						Operation.Priority.Equals(other.Operation.Priority)
+					);
+			}
 		}
 		internal struct PrioritizedOperator
 		{
@@ -54,7 +65,7 @@ namespace ads_lab_1
 
 		internal Regex isFunctionCallRegex;
 		internal Regex currentFunctionCallRegex => new Regex(@"^((\A|\))[-])?({ALLOWEDFUNCS})[\(](\n|.?)+[\)]$".Replace("{ALLOWEDFUNCS}",
-				string.Join('|', FunctionsSignaturesByParametersNumber.Values.SelectMany(v=> v.Keys).ToList())));
+				string.Join('|', FunctionsSignaturesByParametersNumber.Values.SelectMany(v => v.Keys).ToList())));
 
 		public StringEvaluator(bool addDefaultFunctions = true, bool addDefaultOperators = true)
 		{
@@ -70,7 +81,7 @@ namespace ads_lab_1
 				FunctionsSignaturesByParametersNumber[1].Add("tan", Math.Tan);
 				FunctionsSignaturesByParametersNumber[1].Add("log10", Math.Log10);
 				FunctionsSignaturesByParametersNumber[1].Add("log2", Math.Log2);
-				FunctionsSignaturesByParametersNumber[1].Add("ln", new Func<double,double>(x=> Math.Log(x)));
+				FunctionsSignaturesByParametersNumber[1].Add("ln", new Func<double, double>(x => Math.Log(x)));
 
 				FunctionsSignaturesByParametersNumber[2].Add("pow", Math.Pow);
 			}
@@ -106,7 +117,7 @@ namespace ads_lab_1
 		}
 		public void AddFunction(string funcName, Func<double, double> calcFunction)
 		{
-			if(!FunctionsSignaturesByParametersNumber.ContainsKey(1))
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(1))
 				FunctionsSignaturesByParametersNumber.Add(1, new());
 			FunctionsSignaturesByParametersNumber[1].Add(funcName, calcFunction);
 			UpdateFuncsRegex();
@@ -211,9 +222,9 @@ namespace ads_lab_1
 		}
 		public void AddFunction(string funcName, Func<double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double> calcFunction)
 		{
-			if (!FunctionsSignaturesByParametersNumber.ContainsKey(15))
-				FunctionsSignaturesByParametersNumber.Add(15, new());
-			FunctionsSignaturesByParametersNumber[15].Add(funcName, calcFunction);
+			if (!FunctionsSignaturesByParametersNumber.ContainsKey(16))
+				FunctionsSignaturesByParametersNumber.Add(16, new());
+			FunctionsSignaturesByParametersNumber[16].Add(funcName, calcFunction);
 			UpdateFuncsRegex();
 		}
 
@@ -326,12 +337,19 @@ namespace ads_lab_1
 			if (topLevelOps.Any(x => x.Index < opIndex))
 			{
 				var t = topLevelOps.Where(x => x.Index < opIndex).MaxBy(x => x.Index);
+
+				// if the prev number contains minus in the beginnin
+				if (t.Operation.OperationString.Equals("-")
+					&& topLevelOps.Any(x => x.Equals(topLevelOps.Where(x => x.Index < opIndex).OrderByDescending(x => x.Index).Skip(1).Take(1))))
+						t = topLevelOps.Where(x => x.Index < opIndex).OrderByDescending(x => x.Index).Skip(1).First();
+
 				leftClosestOp = t.Index;
 				leftClosestOpLen = t.Operation.OperationString.Length;
 			}
-			if (topLevelOps.Any(x => x.Index > opIndex))
+			var rightSearchStart = s[opIndex + opLen] == '-' ? (opIndex + opLen + 1) : (opIndex + opLen);
+			if (topLevelOps.Any(x => x.Index >= rightSearchStart))
 			{
-				var t = topLevelOps.Where(x => x.Index > opIndex).MinBy(x => x.Index);
+				var t = topLevelOps.Where(x => x.Index >= rightSearchStart).MinBy(x => x.Index);
 				rightClosestOp = t.Index;
 				rightClosestOpLen = t.Operation.OperationString.Length;
 			}
@@ -384,9 +402,16 @@ namespace ads_lab_1
 		// 3. выражение в боковых скобках? - убрать их
 		// 4. вызов функции? - вызвать фунцкии, повторить вызов для параметра
 		// Порядок выбора случая важен !!!
+
+#if DEBUG
+		internal static ulong callNumber = 0;
+		internal static string format = new String('0', ulong.MaxValue.ToString().Length);
+#endif
 		public double Eval2(string s)
 		{
-			Debug.WriteLine($"Evaluation of string \'{s}\' started.");
+#if DEBUG
+			Debug.WriteLine($"CALL #{callNumber++.ToString(format)}: evaluation of string \'{s}\'.");
+#endif
 
 			if (new Regex(@"\s").IsMatch(s)) throw new ArgumentException("White-spaces is not allowed in the expression");
 
@@ -398,17 +423,19 @@ namespace ads_lab_1
 				GetExprsForOpAt(s, opToCalc.Value, len, out var left, out var right, out var leftReplace, out var rightReplace);
 				var operation = s.Substring(opToCalc.Value, len);
 
-				if (!OperatorsSignatures.TryGetValue(operation, out var MyFunc))
+				if (!OperatorsSignatures.TryGetValue(operation, out var myFunc))
 					throw new ArgumentException("Unknown operator found.");
 
-				double evaluated = MyFunc(Eval2(left), Eval2(right));
-
-
+				double evaluated = myFunc(Eval2(left), Eval2(right));
+#if DEBUG
+			Debug.WriteLine($"CALL #{callNumber.ToString(format)}: replacing \'{s.Substring(leftReplace.Start, leftReplace.Count + rightReplace.Count + len)}\' " +
+				$"with \'{evaluated.ToString("F99")}\'.");
+#endif
 				return evaluated is double.NaN ? evaluated :
 					Eval2(s.Remove(leftReplace.Start, leftReplace.Count + rightReplace.Count + len).Insert(leftReplace.Start, evaluated.ToString()));
 			}
 
-			if (s.StartsWith("-("))
+			if (s.StartsWith("-"))
 			{
 				return Eval2(s.Insert(1, "1*"));
 			};
@@ -431,21 +458,18 @@ namespace ads_lab_1
 					negative = true;
 				}
 
-				if(!FunctionsSignaturesByParametersNumber[numOfParams].TryGetValue(funcName,out var func))
+				if (!FunctionsSignaturesByParametersNumber[numOfParams].TryGetValue(funcName, out var func))
 				{
 					throw new ArgumentException($"Unknown function \'{funcName}\' with {numOfParams} parameters.");
 				}
 				else
 				{
-					object[] paramsToMethod  = parameters.Select(p => (object)Eval2(p)).ToArray();
+					object[] paramsToMethod = parameters.Select(p => (object)Eval2(p)).ToArray();
 					// too many code required for doing this without dynamic
 					return (negative ? -1 : 1) * (double)func.DynamicInvoke(paramsToMethod)!;
 				}
 			}
 
-			if (s.Equals("∞")) return double.PositiveInfinity;
-			if (s.Equals("-∞")) return double.NegativeInfinity;
-			if (s.Length == 0) return 0;
 			throw new ArgumentException($"Could not determinate the type of expression \'{s}\'.");
 		}
 	}
