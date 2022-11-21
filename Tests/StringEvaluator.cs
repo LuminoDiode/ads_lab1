@@ -17,7 +17,7 @@ namespace Tests
 		public StringEvaluator(ITestOutputHelper output)
 		{
 			this.output = output;
-            worker = new ads_lab_1.StringEvaluator();
+			worker = new ads_lab_1.StringEvaluator();
 			evalFunction = worker.Eval2;
 		}
 
@@ -375,7 +375,7 @@ namespace Tests
 
 			s = @"(-(-(1+ln(-tan(22*cos(122)+2)+sin(22-sin(122)^^3+2))/3)))^^log2(4)";
 			value = Math.Pow((-(-(1 + Math.Log(-Math.Tan(22 * Math.Cos(122) + 2) + Math.Sin(22 - Math.Pow(Math.Sin(122), 3) + 2)) / 3))), Math.Log2(4));
-			Assert.Equal(value, evalFunction(s),10);
+			Assert.Equal(value, evalFunction(s), 10);
 		}
 
 		[Fact]
@@ -383,12 +383,12 @@ namespace Tests
 		{
 			string s; double value;
 
-			var myWorker = new ads_lab_1.StringEvaluator(false,false);
+			var myWorker = new ads_lab_1.StringEvaluator(false, false);
 			myWorker.AddFunction("plsdont", (x, y) => 2 * x + 3 * y);
 			myWorker.AddOperator("&&", (left, right) => left / 2 + right / 2, 2);
 			myWorker.AddOperator("&", (left, right) => left / 4 + right / 4, 2);
-			myWorker.AddOperator("//", (left, right) => Math.Round(left/right), 2);
-			myWorker.AddOperator("+", (left, right) => left+right, 1);
+			myWorker.AddOperator("//", (left, right) => Math.Round(left / right), 2);
+			myWorker.AddOperator("+", (left, right) => left + right, 1);
 			myWorker.AddFunction("min", (x, y) => x < y ? x : y);
 			myWorker.AddFunction("min", (x, y, z) => Math.Min(Math.Min(x, y), z));
 
@@ -403,13 +403,24 @@ namespace Tests
 			string s; double value;
 
 			var myWorker = new ads_lab_1.StringEvaluator(true, true);
-			myWorker.AddFunction("plsdont", (x) => x*2);
-			myWorker.AddFunction("plsdont2",(a,b,c,d,e,f,g) => a + b + c + d + e+f+g);
-			myWorker.AddFunction("plsdont3", ()=>100);
+			myWorker.AddFunction("plsdont", (x) => x * 2);
+			myWorker.AddFunction("plsdont2", (a, b, c, d, e, f, g) => a + b + c + d + e + f + g);
+			myWorker.AddFunction("plsdont3", () => 100);
 
 			s = "plsdont(1)*plsdont2(1,2,3,4,5,6,7)+plsdont3()";
-			value = 2*(1+2+3+4+5+6+7)+100; 
+			value = 2 * (1 + 2 + 3 + 4 + 5 + 6 + 7) + 100;
 			Assert.Equal(value, myWorker.Eval2(s), 10);
+		}
+
+		[Fact]
+		public void Eval2_9()
+		{ //-(-(1+log10(-tan(1.8259630859019063*cos(0.514769420267441)+2)+pow(1.1184331439986979,-sin(1.6269547537094704)+2))/3))'
+
+			var val = evalFunction(@"1+-0.2");
+
+			Assert.Equal(0.8, val, 10);
+
+			val = evalFunction(@"-(-(1+log10(-tan(1.8259630859019063*cos(0.514769420267441)+2)+pow(1.1184331439986979,-sin(1.6269547537094704)+2))/3))");
 		}
 	}
 }
